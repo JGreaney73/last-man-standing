@@ -1,0 +1,97 @@
+.admin-page {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.admin-header {
+  background: linear-gradient(
+    135deg,
+    #003b7a,
+    #0065b3
+  );
+  color: white;
+  padding: 30px;
+  border-radius: 18px;
+  margin-bottom: 20px;
+}
+
+.admin-stats {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(220px, 1fr)
+  );
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.admin-card {
+  background: white;
+  padding: 20px;
+  border-radius: 15px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.08);
+}
+
+.admin-number {
+  font-size: 38px;
+  font-weight: bold;
+  color: #003b7a;
+}
+
+.admin-section {
+  background: white;
+  padding: 20px;
+  border-radius: 15px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.08);
+}
+
+.button-grid {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(220px, 1fr)
+  );
+  gap: 15px;
+}
+
+.action-btn {
+  padding: 15px;
+  border: none;
+  border-radius: 10px;
+  background: #0059b3;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.action-btn:hover {
+  background: #003f7d;
+}
+
+.fixture-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.fixture-table th,
+.fixture-table td {
+  padding: 12px;
+  border-bottom: 1px solid #ddd;
+  text-align: left;
+}
+
+.fixture-table th {
+  background: #f3f7fb;
+}
+
+.rule-card {
+  background: #f3f7fb;
+  padding: 15px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+
+.rule-card h4 {
+  margin-top: 0;
+}
