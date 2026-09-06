@@ -95,3 +95,75 @@
 .rule-card h4 {
   margin-top: 0;
 }
+
+.status-alive {
+  color: #168149;
+  font-weight: bold;
+}
+
+.status-out {
+  color: #c62828;
+  font-weight: bold;
+}
+
+.distribution-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px;
+  margin-bottom: 8px;
+  background: #f3f7fb;
+  border-radius: 8px;
+}
+
+.health-grid {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(180px, 1fr)
+  );
+  gap: 15px;
+}
+
+.health-card {
+  background: #f3f7fb;
+  padding: 15px;
+  border-radius: 10px;
+}
+
+.danger-section {
+  border-left: 5px solid #c62828;
+}
+
+.danger-btn {
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 14px;
+  border: none;
+  border-radius: 10px;
+  color: white;
+  background: #c62828;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.danger-btn:hover {
+  background: #8e0000;
+}
+
+.status-dropdown-alive {
+  background: #eaf8f0;
+  color: #168149;
+  border: 1px solid #168149;
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-weight: bold;
+}
+
+.status-dropdown-out {
+  background: #fdecec;
+  color: #c62828;
+  border: 1px solid #c62828;
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-weight: bold;
+}

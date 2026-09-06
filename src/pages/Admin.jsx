@@ -1,3 +1,4 @@
+import { useState } from "react";
 import "./Admin.css";
 
 function Admin() {
@@ -27,6 +28,75 @@ function Admin() {
     },
   ];
 
+  const [participants, setParticipants] = useState([
+    {
+      id: 1,
+      name: "James Greaney",
+      selection: "Liverpool",
+      status: "Alive",
+    },
+    {
+      id: 2,
+      name: "Fred Chan",
+      selection: "Chelsea",
+      status: "Eliminated",
+    },
+    {
+      id: 3,
+      name: "Jennifer Sun",
+      selection: "Arsenal",
+      status: "Alive",
+    },
+    {
+      id: 4,
+      name: "Ryan Townsend",
+      selection: "Tottenham",
+      status: "Alive",
+    },
+  ]);
+
+const remaining = participants.filter(
+(player) => player.status === "Alive"
+).length;
+
+const eliminated = participants.filter(
+(player) => player.status === "Eliminated"
+).length;
+
+const updatePlayerStatus = (
+  playerId,
+  newStatus
+) => {
+  setParticipants((currentPlayers) =>
+    currentPlayers.map((player) =>
+      player.id === playerId
+        ? {
+            ...player,
+            status: newStatus,
+          }
+        : player
+    )
+  );
+};
+  const selectionStats = [
+  {
+    team: "Liverpool",
+    count: 35,
+  },
+  {
+    team: "Arsenal",
+    count: 24,
+  },
+  {
+    team: "Tottenham",
+    count: 16,
+  },
+  {
+    team: "Brighton",
+    count: 12,
+  },
+  ];
+
   return (
     <div className="admin-page">
 
@@ -49,14 +119,14 @@ function Admin() {
         <div className="admin-card">
           <h3>Remaining</h3>
           <div className="admin-number">
-            {competitionStats.remaining}
+            {remaining}
           </div>
         </div>
 
         <div className="admin-card">
           <h3>Eliminated</h3>
           <div className="admin-number">
-            {competitionStats.eliminated}
+            {eliminated}
           </div>
         </div>
 
@@ -67,7 +137,96 @@ function Admin() {
           </div>
         </div>
 
+        <div className="admin-card">
+          <h3>Current Week</h3>
+          <div className="admin-number">
+            {competitionStats.currentWeek}
+          </div>
+        </div>
+
       </div>
+
+
+     {/* Selection Distribution */}
+
+      <div className="admin-section">
+
+        <h2>Selection Distribution</h2>
+
+        {selectionStats.map((team) => (
+
+          <div
+            className="distribution-row"
+            key={team.team}
+          >
+
+            <div>
+              {team.team}
+            </div>
+
+            <div>
+              {team.count} selections
+            </div>
+
+          </div>
+
+        ))}
+
+      </div>
+
+
+     {/* Competition Health */}
+     
+      <div className="admin-section">
+
+        <h2>Competition Health</h2>
+
+        <div className="health-grid">
+
+          <div className="health-card">
+            <h4>Entry Fee</h4>
+            <div>$20</div>
+          </div>
+
+          <div className="health-card">
+            <h4>Survival Rate</h4>
+            <div>58%</div>
+          </div>
+
+          <div className="health-card">
+            <h4>Weeks Remaining</h4>
+            <div>16</div>
+          </div>
+
+        </div>
+
+      </div>
+
+
+     {/* Round Processing */}
+     
+      <div className="admin-section danger-section">
+
+        <h2>Round Processing</h2>
+
+        <p>
+          These actions affect participant outcomes.
+        </p>
+
+        <button className="danger-btn">
+          Process Week Results
+        </button>
+
+        <button className="danger-btn">
+          Eliminate Failed Selections
+        </button>
+
+        <button className="danger-btn">
+          Finalise Round
+        </button>
+
+      </div>
+
 
       {/* Competition Actions */}
 
@@ -136,6 +295,69 @@ function Admin() {
         </table>
 
       </div>
+
+
+      {/* Participant Status */}
+
+      <div className="admin-section">
+
+        <h2>Participant Status</h2>
+
+        <table className="fixture-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Selection</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+
+          <tbody>
+
+            {participants.map((player) => (
+              <tr key={player.id}>
+
+                <td>{player.name}</td>
+
+                <td>{player.selection}</td>
+
+                <td>
+
+                <select
+                  value={player.status}
+                  onChange={(e) =>
+                    updatePlayerStatus(
+                      player.id,
+                      e.target.value
+                    )
+                  }
+                  className={
+                    player.status === "Alive"
+                      ? "status-dropdown-alive"
+                      : "status-dropdown-out"
+                  }
+                >
+
+                  <option value="Alive">
+                    Alive
+                  </option>
+
+                  <option value="Eliminated">
+                    Eliminated
+                  </option>
+
+                </select>
+
+              </td>
+
+              </tr>
+            ))}
+
+          </tbody>
+        </table>
+
+      </div>
+
 
       {/* Round Processing Logic */}
 
