@@ -22,7 +22,7 @@
 .stat-value {
   font-size: 36px;
   font-weight: bold;
-  color: #003b7a;
+  color: var(--stingrays-orange);
 }
 
 .panel {
@@ -51,7 +51,7 @@
 }
 
 .bar {
-  background: #0059b3;
+  background: var(--stingrays-orange);
   color: white;
   text-align: right;
   padding: 8px;
@@ -70,10 +70,11 @@
 }
 
 .team-chip {
-  background: #e6eef7;
-  color: #003b7a;
+  background: var(--stingrays-light);
+  color: var(--stingrays-dark);
   padding: 10px;
-  border-radius: 10px;
+  border-radius: 16px;
+  border: 1px solid var(--stingrays-orange);
 }
 
 @media (max-width: 768px) {

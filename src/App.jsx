@@ -1,10 +1,9 @@
 import { useState } from "react";
-
 import Dashboard from "./pages/Dashboard";
 import Selection from "./pages/Selection";
 import Journey from "./pages/Journey";
 import Admin from "./pages/Admin";
-
+import stingraysLogo from "./assets/stingrays-logo.png";
 import "./App.css";
 
 function App() {
@@ -30,31 +29,53 @@ function App() {
   return (
     <div>
 
+
       <nav className="navbar">
 
-        <button
-          onClick={() => setPage("dashboard")}
-        >
-          Dashboard
-        </button>
+        <div className="navbar-brand">
 
-        <button
-          onClick={() => setPage("selection")}
-        >
-          Make Selection
-        </button>
+        <img
+          src={stingraysLogo}
+          alt="Aspendale Stingrays"
+          className="brand-title"
+        />
+        <div className="brand-title">
+          Last Man Standing
+        </div>
 
-        <button
-          onClick={() => setPage("journey")}
-        >
-          My Journey
-        </button>
+          <div className="brand-subtitle">
+            Aspendale Stingrays FC
+          </div>
 
-        <button
-          onClick={() => setPage("admin")}
-        >
-          Admin
-        </button>
+        </div>
+
+        <div className="nav-buttons">
+
+          <button
+            onClick={() => setPage("dashboard")}
+          >
+            Dashboard
+          </button>
+
+          <button
+            onClick={() => setPage("selection")}
+          >
+            Make Selection
+          </button>
+
+          <button
+            onClick={() => setPage("journey")}
+          >
+            My Journey
+          </button>
+
+          <button
+            onClick={() => setPage("admin")}
+          >
+            Admin
+          </button>
+
+        </div>
 
       </nav>
 

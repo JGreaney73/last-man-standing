@@ -1,3 +1,10 @@
+:root {
+  --stingrays-orange: #f26522;
+  --stingrays-orange-dark: #d94f13;
+  --stingrays-navy: #1c2857;
+  --stingrays-light: #fff4ec;
+}
+
 body {
   margin: 0;
   background: #f4f7fa;
@@ -13,8 +20,8 @@ body {
 .header {
   background: linear-gradient(
     135deg,
-    #003b7a,
-    #0059b3
+    var(--stingrays-navy),
+    var(--stingrays-orange)
   );
   color: white;
   padding: 30px;
@@ -81,7 +88,7 @@ body {
 }
 
 .primary-button {
-  background: #0059b3;
+  background: var(--stingrays-orange);
   color: white;
   border: none;
   padding: 14px 24px;
@@ -92,7 +99,7 @@ body {
 }
 
 .primary-button:hover {
-  background: #004080;
+  background: var(--stingrays-orange-dark);
 }
 
 ul {
@@ -104,7 +111,7 @@ li {
 }
 
 .navbar {
-  background: #003b7a;
+  background: var(--stingrays-navy);
   padding: 15px;
   display: flex;
   gap: 10px;
@@ -112,6 +119,7 @@ li {
 
 .navbar button {
   background: white;
+  color: var(--stingrays-navy);
   border: none;
   padding: 10px 15px;
   border-radius: 8px;
@@ -119,9 +127,45 @@ li {
 }
 
 .navbar button:hover {
-  background: #e6eef7;
+  background: var(--stingrays-orange);
+  color: white;
 }
 
 .page-content {
   padding: 20px;
+}
+
+.navbar {
+  justify-content: space-between;
+  align-items: center;
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.club-logo {
+  height: 70px;
+  width: auto;
+  background: white;
+  border-radius: 50%;
+  padding: 3px;
+}
+
+.brand-title {
+  color: white;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.brand-subtitle {
+  color: rgba(255,255,255,0.8);
+  font-size: 12px;
+}
+
+.nav-buttons {
+  display: flex;
+  gap: 10px;
 }

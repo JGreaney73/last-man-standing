@@ -167,3 +167,288 @@
   padding: 5px 10px;
   font-weight: bold;
 }
+
+.admin-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.admin-section-heading h2 {
+  margin: 3px 0 0;
+}
+
+.admin-section-label {
+  margin: 0;
+  color: #607284;
+  font-size: 12px;
+  font-weight: bold;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.section-description {
+  margin: 0 0 20px;
+  color: #607284;
+  line-height: 1.5;
+}
+
+.round-status,
+.participant-count {
+  display: inline-block;
+  padding: 7px 11px;
+  font-size: 12px;
+  font-weight: bold;
+  border-radius: 20px;
+}
+
+.round-status-ready {
+  color: #146c3f;
+  background: #e7f7ee;
+}
+
+.round-status-pending {
+  color: #7b5700;
+  background: #fff4cf;
+}
+
+.participant-count {
+  color: #174774;
+  background: #eaf4fc;
+}
+
+.results-fixture-list {
+  display: grid;
+  gap: 12px;
+}
+
+.result-fixture-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 15px;
+  background: #f4f7fa;
+  border: 1px solid #e0e7ed;
+  border-radius: 11px;
+}
+
+.result-fixture-details {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.result-fixture-details span {
+  color: #607284;
+  font-size: 13px;
+}
+
+.result-field {
+  min-width: 220px;
+}
+
+.result-dropdown {
+  width: 100%;
+  padding: 10px 34px 10px 11px;
+  color: #18344c;
+  font-weight: bold;
+  background: white;
+  border: 1px solid #bdcad5;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.result-dropdown:focus,
+.status-dropdown-alive:focus,
+.status-dropdown-out:focus {
+  outline: 3px solid rgba(0, 89, 179, 0.18);
+  outline-offset: 1px;
+}
+
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.status-dropdown-alive,
+.status-dropdown-out {
+  min-width: 112px;
+  padding: 7px 10px;
+  font-weight: bold;
+  border-radius: 7px;
+  cursor: pointer;
+}
+
+.status-dropdown-alive {
+  color: #168149;
+  background: #eaf8f0;
+  border: 1px solid #75bd94;
+}
+
+.status-dropdown-out {
+  color: #c62828;
+  background: #fdecec;
+  border: 1px solid #e29b9b;
+}
+
+.outcome-preview {
+  display: inline-block;
+  padding: 6px 9px;
+  font-size: 12px;
+  font-weight: bold;
+  border-radius: 7px;
+}
+
+.outcome-survives {
+  color: #146c3f;
+  background: #e7f7ee;
+}
+
+.outcome-eliminated {
+  color: #a51f1f;
+  background: #fdecec;
+}
+
+.outcome-pending {
+  color: #735300;
+  background: #fff4cf;
+}
+
+.selection-distribution {
+  display: grid;
+  gap: 11px;
+}
+
+.distribution-row {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) 2fr 50px;
+  gap: 15px;
+  align-items: center;
+  padding: 12px;
+  background: #f4f7fa;
+  border-radius: 10px;
+}
+
+.distribution-team {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.distribution-team span {
+  color: #607284;
+  font-size: 12px;
+}
+
+.distribution-bar-container {
+  height: 11px;
+  overflow: hidden;
+  background: #dfe7ed;
+  border-radius: 20px;
+}
+
+.distribution-bar {
+  min-width: 4px;
+  height: 100%;
+  background: #0059b3;
+  border-radius: 20px;
+}
+
+.distribution-percentage {
+  color: #174774;
+  text-align: right;
+}
+
+.processing-message {
+  padding: 14px 16px;
+  margin: 17px 0;
+  line-height: 1.5;
+  border-radius: 9px;
+}
+
+.processing-success {
+  color: #155b37;
+  background: #eaf8f0;
+  border: 1px solid #bce5cd;
+}
+
+.processing-warning {
+  color: #714c00;
+  background: #fff8e4;
+  border: 1px solid #f2dda3;
+}
+
+.processing-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.danger-btn,
+.reset-simulator-btn {
+  padding: 14px 18px;
+  font-size: 14px;
+  font-weight: bold;
+  border: none;
+  border-radius: 9px;
+  cursor: pointer;
+}
+
+.danger-btn {
+  color: white;
+  background: #c62828;
+}
+
+.danger-btn:hover {
+  background: #991b1b;
+}
+
+.reset-simulator-btn {
+  color: #26445d;
+  background: #e5ebf0;
+}
+
+.reset-simulator-btn:hover {
+  background: #d5dee6;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  white-space: nowrap;
+  border: 0;
+  clip: rect(0, 0, 0, 0);
+}
+
+@media (max-width: 700px) {
+  .admin-section-heading,
+  .result-fixture-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .result-field {
+    min-width: 0;
+  }
+
+  .distribution-row {
+    grid-template-columns: 1fr 45px;
+  }
+
+  .distribution-bar-container {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .processing-actions {
+    grid-template-columns: 1fr;
+  }
+}
