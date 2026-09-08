@@ -1,0 +1,69 @@
+.leaderboard-page {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.leaderboard-header {
+  background: linear-gradient(
+    135deg,
+    var(--stingrays-navy),
+    var(--stingrays-orange)
+  );
+  color: white;
+  padding: 25px;
+  border-radius: 16px;
+  margin-bottom: 20px;
+}
+
+.leaderboard-stats {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(220px, 1fr)
+  );
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.leaderboard-card {
+  background: white;
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.08);
+}
+
+.leaderboard-number {
+  font-size: 36px;
+  font-weight: bold;
+  color: var(--stingrays-orange);
+}
+
+.leaderboard-section {
+  background: white;
+  padding: 20px;
+  margin-bottom: 20px;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.08);
+}
+
+.leaderboard-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.leaderboard-table th,
+.leaderboard-table td {
+  padding: 12px;
+  border-bottom: 1px solid #ddd;
+  text-align: left;
+}
+
+.alive {
+  color: green;
+  font-weight: bold;
+}
+
+.eliminated {
+  color: red;
+  font-weight: bold;
+}

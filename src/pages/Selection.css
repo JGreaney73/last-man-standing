@@ -11,7 +11,7 @@
   padding: 30px;
   margin-bottom: 20px;
   color: white;
-  background: linear-gradient(135deg, #003b7a, #0065b3);
+  background: linear-gradient(135deg, var(--stingrays-navy), var(--stingrays-orange));
   border-radius: 18px;
 }
 

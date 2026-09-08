@@ -3,6 +3,7 @@ import Dashboard from "./pages/Dashboard";
 import Selection from "./pages/Selection";
 import Journey from "./pages/Journey";
 import Admin from "./pages/Admin";
+import Leaderboard from "./pages/Leaderboard";
 import stingraysLogo from "./assets/stingrays-logo.png";
 import "./App.css";
 
@@ -14,6 +15,9 @@ function App() {
     switch (page) {
       case "selection":
         return <Selection />;
+
+      case "leaderboard":
+        return <Leaderboard />;
 
       case "journey":
         return <Journey />;
@@ -57,6 +61,7 @@ function App() {
             Dashboard
           </button>
 
+          
           <button
             onClick={() => setPage("selection")}
           >
@@ -67,6 +72,12 @@ function App() {
             onClick={() => setPage("journey")}
           >
             My Journey
+          </button>
+
+          <button
+            onClick={() => setPage("leaderboard")}
+          >
+            Leaderboard
           </button>
 
           <button

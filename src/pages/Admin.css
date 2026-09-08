@@ -6,8 +6,8 @@
 .admin-header {
   background: linear-gradient(
     135deg,
-    #003b7a,
-    #0065b3
+    var(--stingrays-navy),
+    var(--stingrays-orange)
   );
   color: white;
   padding: 30px;

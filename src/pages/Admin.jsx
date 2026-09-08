@@ -1,36 +1,13 @@
 import { useState } from "react";
 import "./Admin.css";
 import { participants as participantData } from "../data/participants";
+import { fixtures as fixtureData } from "../data/fixtures";
+import { competition } from "../data/competition";
 
-const startingFixtures = [
-  {
-    id: 1,
-    home: "Liverpool",
-    away: "Bournemouth",
-    result: "Pending",
-  },
-  {
-    id: 2,
-    home: "Chelsea",
-    away: "Everton",
-    result: "Pending",
-  },
-  {
-    id: 3,
-    home: "Arsenal",
-    away: "Fulham",
-    result: "Pending",
-  },
-  {
-    id: 4,
-    home: "Tottenham",
-    away: "Brentford",
-    result: "Pending",
-  },
-];
+const startingFixtures = fixtureData;
 
 function Admin() {
-  const [fixtures, setFixtures] = useState(startingFixtures);
+  const [fixtures, setFixtures] = useState(fixtureData);
 
   const [participants, setParticipants] = useState(
     participantData
@@ -42,8 +19,9 @@ function Admin() {
   const [roundProcessed, setRoundProcessed] =
     useState(false);
 
-  const entryFee = 20;
-  const currentWeek = 4;
+  const entryFee = competition.entryFee;
+  const currentWeek = competition.currentWeek;
+  const season = competition.season;
 
   const entrants = participants.length;
 
