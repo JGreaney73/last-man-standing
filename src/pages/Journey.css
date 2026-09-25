@@ -7,7 +7,7 @@
   background: linear-gradient(
     135deg,
     var(--stingrays-navy),
-var(--stingrays-orange)
+    var(--stingrays-orange)
   );
   color: white;
   padding: 30px;
@@ -75,6 +75,23 @@ var(--stingrays-orange)
   font-size: 42px;
   font-weight: bold;
   color: #003b7a;
+}
+
+.journey-card-spaced {
+  margin-top: 20px;
+}
+
+.data-muted {
+  color: #607284;
+}
+
+.data-error {
+  padding: 14px 16px;
+  margin-bottom: 20px;
+  color: #a51f1f;
+  background: #fdecec;
+  border: 1px solid #e29b9b;
+  border-radius: 9px;
 }
 
 @media (max-width: 768px) {

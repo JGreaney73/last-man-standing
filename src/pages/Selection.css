@@ -199,9 +199,9 @@
 
 .team-button {
   display: grid;
-  grid-template-columns: 40px 1fr auto;
-  gap: 10px;
-  align-items: center;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 5px;
+  align-content: center;
   min-height: 66px;
   padding: 10px 12px;
   color: #18344c;
@@ -254,8 +254,11 @@
 }
 
 .team-status {
+  display: block;
+  min-height: 1.2em;
   color: #607284;
   font-size: 11px;
+  line-height: 1.2;
 }
 
 .team-button-selected .team-status {
@@ -441,4 +444,36 @@
 
 .reset-selection-button:hover {
   background: #b71c1c;
+}
+
+@media (max-width: 640px) {
+  .selection-hero {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 22px;
+  }
+
+  .selection-hero h1 {
+    font-size: 30px;
+  }
+
+  .selection-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .fixtures-panel,
+  .selection-summary,
+  .used-teams-panel,
+  .auto-pick-panel {
+    padding: 16px;
+  }
+
+  .fixture-teams {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .team-button {
+    min-height: 60px;
+  }
 }

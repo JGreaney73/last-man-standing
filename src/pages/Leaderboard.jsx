@@ -1,127 +1,105 @@
-import { participants } from "../data/participants";
+import { useEffect, useState } from "react";
+import { supabase } from "../lib/supabase";
+import { useAuth } from "../context/useAuth";
+import { loadOwnSelections, loadSelectionDetails } from "../lib/userCompetitionData";
 import "./Leaderboard.css";
 
 function Leaderboard() {
+  const { user } = useAuth();
+  const [players, setPlayers] = useState([]);
+  const [history, setHistory] = useState([]);
+  const [historyAvailable, setHistoryAvailable] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const alivePlayers = participants.filter(
-    (player) => player.status === "Alive"
-  );
+  useEffect(() => {
+    const loadLeaderboard = async () => {
+      const [playersResult, selections] = await Promise.all([
+        supabase.from("leaderboard_players").select("id, display_name, username, competition_status"),
+        loadOwnSelections(user.id),
+      ]);
 
-  const eliminatedPlayers = participants.filter(
-    (player) => player.status === "Eliminated"
-  );
+      if (playersResult.error) throw playersResult.error;
+      setPlayers(playersResult.data ?? []);
+
+      try {
+        setHistory(await loadSelectionDetails(selections));
+        setHistoryAvailable(true);
+      } catch (historyError) {
+        setHistory([]);
+        setHistoryAvailable(false);
+        setError(historyError.message);
+      }
+    };
+
+    loadLeaderboard()
+      .catch((loadError) => setError(loadError.message))
+      .finally(() => setLoading(false));
+  }, [user.id]);
+
+  const activePlayers = players.filter((player) => player.competition_status === "active");
+  const eliminatedPlayers = players.filter((player) => player.competition_status === "eliminated");
+  const playerName = (player) => player.display_name || player.username || "Unnamed player";
+
+  if (loading) return <div className="leaderboard-page" role="status">Loading leaderboard…</div>;
 
   return (
     <div className="leaderboard-page">
-
       <div className="leaderboard-header">
-
         <h1>Leaderboard</h1>
-
-        <p>
-          Aspendale Stingrays Last Man Standing
-        </p>
-
+        <p>Aspendale Stingrays Last Man Standing</p>
       </div>
+
+      {error && <div className="data-error" role="alert">{error}</div>}
 
       <div className="leaderboard-stats">
-
-        <div className="leaderboard-card">
-          <h3>Still Alive</h3>
-          <div className="leaderboard-number">
-            {alivePlayers.length}
-          </div>
-        </div>
-
-        <div className="leaderboard-card">
-          <h3>Eliminated</h3>
-          <div className="leaderboard-number">
-            {eliminatedPlayers.length}
-          </div>
-        </div>
-
+        <div className="leaderboard-card"><h3>Active players</h3><div className="leaderboard-number">{activePlayers.length}</div></div>
+        <div className="leaderboard-card"><h3>Eliminated players</h3><div className="leaderboard-number">{eliminatedPlayers.length}</div></div>
       </div>
 
-      <div className="leaderboard-section">
+      <LeaderboardSection title="Active players" players={activePlayers} playerName={playerName} statusLabel="Active" statusClass="alive" />
+      <LeaderboardSection title="Eliminated players" players={eliminatedPlayers} playerName={playerName} statusLabel="Eliminated" statusClass="eliminated" />
 
-        <h2>Survivors</h2>
-
-        <table className="leaderboard-table">
-
-          <thead>
-            <tr>
-              <th>Rank</th>
-              <th>Player</th>
-              <th>Selection</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-
-          <tbody>
-
-            {alivePlayers.map((player) => (
-              <tr key={player.id}>
-
-                <td>1</td>
-
-                <td>{player.name}</td>
-
-                <td>{player.selection}</td>
-
-                <td>
-                  <span className="alive">
-                    Alive
-                  </span>
-                </td>
-
-              </tr>
+      <section className="leaderboard-section">
+        <h2>Your selection history</h2>
+        {!historyAvailable ? (
+          <p className="data-muted">Your selection history is unavailable.</p>
+        ) : history.length === 0 ? (
+          <p className="data-muted">You have no recorded selections yet.</p>
+        ) : (
+          <div className="history-list">
+            {history.map((selection) => (
+              <div className="history-row" key={selection.id}>
+                <strong>Round {selection.round.round_number}</strong>
+                <span>{selection.team.name}</span>
+                <small>{selection.is_automatic ? "Automatically selected" : "Selected by you"}</small>
+              </div>
             ))}
-
-          </tbody>
-
-        </table>
-
-      </div>
-
-      <div className="leaderboard-section">
-
-        <h2>Eliminated Players</h2>
-
-        <table className="leaderboard-table">
-
-          <thead>
-            <tr>
-              <th>Player</th>
-              <th>Selection</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-
-          <tbody>
-
-            {eliminatedPlayers.map((player) => (
-              <tr key={player.id}>
-
-                <td>{player.name}</td>
-
-                <td>{player.selection}</td>
-
-                <td>
-                  <span className="eliminated">
-                    Eliminated
-                  </span>
-                </td>
-
-              </tr>
-            ))}
-
-          </tbody>
-
-        </table>
-
-      </div>
-
+          </div>
+        )}
+      </section>
     </div>
+  );
+}
+
+function LeaderboardSection({ title, players, playerName, statusLabel, statusClass }) {
+  return (
+    <section className="leaderboard-section">
+      <h2>{title}</h2>
+      {players.length === 0 ? (
+        <p className="data-muted">No {title.toLowerCase()} yet.</p>
+      ) : (
+        <div className="leaderboard-list">
+          {players.map((player, index) => (
+            <div className="leaderboard-row" key={player.id}>
+              <span>{index + 1}</span>
+              <strong>{playerName(player)}</strong>
+              <span className={statusClass}>{statusLabel}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
   );
 }
 

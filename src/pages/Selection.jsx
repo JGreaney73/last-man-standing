@@ -1,340 +1,330 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useAuth } from "../context/useAuth";
+import { supabase } from "../lib/supabase";
+import {
+  loadOwnSelections,
+  loadSelectionDetails,
+} from "../lib/userCompetitionData";
 import "./Selection.css";
 
-const fixtures = [
-  {
-    id: 1,
-    kickOff: "Friday, 8:00 pm",
-    home: "Liverpool",
-    away: "Bournemouth",
-  },
-  {
-    id: 2,
-    kickOff: "Saturday, 12:30 pm",
-    home: "Arsenal",
-    away: "Fulham",
-  },
-  {
-    id: 3,
-    kickOff: "Saturday, 3:00 pm",
-    home: "Chelsea",
-    away: "Everton",
-  },
-  {
-    id: 4,
-    kickOff: "Saturday, 3:00 pm",
-    home: "Brighton",
-    away: "West Ham",
-  },
-  {
-    id: 5,
-    kickOff: "Saturday, 5:30 pm",
-    home: "Tottenham",
-    away: "Brentford",
-  },
-];
-
-const previouslyUsedTeams = [
-  { team: "Arsenal", week: 1 },
-  { team: "Chelsea", week: 2 },
-  { team: "Aston Villa", week: 3 },
-];
+function formatKickoff(value) {
+  return new Date(value).toLocaleString([], {
+    weekday: "long",
+    day: "numeric",
+    month: "short",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
 
 function Selection() {
-  const [selectedTeam, setSelectedTeam] = useState("");
-  const [lockedSelection, setLockedSelection] = useState("");
+  const { user } = useAuth();
+  const [currentRound, setCurrentRound] = useState(null);
+  const [fixtures, setFixtures] = useState([]);
+  const [history, setHistory] = useState([]);
+  const [selectedTeamId, setSelectedTeamId] = useState("");
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const loadSelectionData = useCallback(async () => {
+    setLoading(true);
+    setError("");
+
+    const { data: rounds, error: roundsError } = await supabase
+      .from("rounds")
+      .select("id, round_number, name, status")
+      .in("status", ["open", "scheduled"])
+      .order("round_number");
+
+    if (roundsError) throw roundsError;
+
+    const round =
+      rounds?.find((item) => item.status === "open") ?? rounds?.[0] ?? null;
+
+    if (!round) {
+      setCurrentRound(null);
+      setFixtures([]);
+      setHistory([]);
+      setSelectedTeamId("");
+      setLoading(false);
+      return;
+    }
+
+    const { data: fixtureRows, error: fixturesError } = await supabase
+      .from("fixtures")
+      .select("id, kickoff, location, home_team_id, away_team_id, result")
+      .eq("round_id", round.id)
+      .order("kickoff");
+
+    if (fixturesError) throw fixturesError;
+
+    const teamIds = [
+      ...new Set(
+        (fixtureRows ?? []).flatMap((fixture) => [
+          fixture.home_team_id,
+          fixture.away_team_id,
+        ])
+      ),
+    ];
+
+    const { data: teams, error: teamsError } = await supabase
+      .from("teams")
+      .select("id, name")
+      .in("id", teamIds);
+
+    if (teamsError) throw teamsError;
+
+    const teamMap = new Map(
+      (teams ?? []).map((team) => [team.id, team])
+    );
+
+    const incompleteFixture = (fixtureRows ?? []).some(
+      (fixture) =>
+        !teamMap.has(fixture.home_team_id) ||
+        !teamMap.has(fixture.away_team_id)
+    );
+
+    if (incompleteFixture) {
+      throw new Error("One or more upcoming fixtures has incomplete team data.");
+    }
+
+    const selections = await loadOwnSelections(user.id);
+    const selectionDetails = await loadSelectionDetails(selections);
+    const roundSelection = selectionDetails.find(
+      (selection) => selection.round_id === round.id
+    );
+
+    setCurrentRound(round);
+    setFixtures(
+      (fixtureRows ?? []).map((fixture) => ({
+        ...fixture,
+        home: teamMap.get(fixture.home_team_id),
+        away: teamMap.get(fixture.away_team_id),
+      }))
+    );
+    setHistory(selectionDetails);
+    setSelectedTeamId(roundSelection?.team_id
+      ? String(roundSelection.team_id)
+      : "");
+    setLoading(false);
+  }, [user.id]);
 
   useEffect(() => {
-    const savedSelection = localStorage.getItem(
-      "lastManStandingLockedSelection"
+    const timerId = window.setTimeout(() => {
+      loadSelectionData().catch((loadError) => {
+        setError(loadError.message);
+        setLoading(false);
+      });
+    }, 0);
+
+    return () => window.clearTimeout(timerId);
+  }, [loadSelectionData]);
+
+  const currentSelection = currentRound
+    ? history.find((selection) => selection.round_id === currentRound.id)
+    : null;
+
+  const usedTeamIds = new Set(
+    history.map((selection) => String(selection.team_id))
+  );
+
+  const handleTeamSelection = (teamId) => {
+    if (currentSelection || usedTeamIds.has(String(teamId))) return;
+    setSelectedTeamId(String(teamId));
+  };
+
+  const confirmSelection = async () => {
+    const selectedFixture = fixtures.find(
+      (fixture) =>
+        String(fixture.home_team_id) === selectedTeamId ||
+        String(fixture.away_team_id) === selectedTeamId
     );
 
-    if (savedSelection) {
-      setLockedSelection(savedSelection);
-      setSelectedTeam(savedSelection);
+    if (!currentRound || !selectedFixture || currentSelection) return;
+
+    setSaving(true);
+    setError("");
+
+    const { error: insertError } = await supabase.from("selections").insert({
+      user_id: user.id,
+      round_id: currentRound.id,
+      fixture_id: selectedFixture.id,
+      team_id: Number(selectedTeamId),
+      is_automatic: false,
+    });
+
+    if (insertError) {
+      setError(insertError.message);
+    } else {
+      setShowConfirmation(false);
+      await loadSelectionData();
     }
-  }, []);
 
-  const isTeamUsed = (team) => {
-    return previouslyUsedTeams.some(
-      (usedSelection) => usedSelection.team === team
-    );
+    setSaving(false);
   };
 
-  const getUsedWeek = (team) => {
-    const usedSelection = previouslyUsedTeams.find(
-      (selection) => selection.team === team
-    );
-
-    return usedSelection?.week;
-  };
-
-  const handleTeamSelection = (team) => {
-    if (lockedSelection || isTeamUsed(team)) {
-      return;
-    }
-
-    setSelectedTeam(team);
-  };
-
-  const openConfirmation = () => {
-    if (!selectedTeam || lockedSelection) {
-      return;
-    }
-
-    setShowConfirmation(true);
-  };
-
-  const cancelConfirmation = () => {
-    setShowConfirmation(false);
-  };
-
-  const confirmSelection = () => {
-    localStorage.setItem(
-      "lastManStandingLockedSelection",
-      selectedTeam
-    );
-
-    setLockedSelection(selectedTeam);
-    setShowConfirmation(false);
-  };
-
-  const resetSelection = () => {
-    localStorage.removeItem(
-      "lastManStandingLockedSelection"
-    );
-
-    setLockedSelection("");
-    setSelectedTeam("");
-  };
+  if (loading) {
+    return <div className="selection-page" role="status">Loading fixtures and selection history…</div>;
+  }
 
   return (
     <div className="selection-page">
-
       <div className="selection-hero">
         <h1>Make Your Selection</h1>
-
-        <p>
-          Choose one Premier League team to win
-          this weekend.
-        </p>
+        <p>Choose one team to win this weekend.</p>
       </div>
 
-      {lockedSelection ? (
-        <div className="locked-banner">
-          <h2>
-            Selection Locked ✓
-          </h2>
+      {error && <div className="data-error" role="alert">{error}</div>}
 
+      {!currentRound ? (
+        <div className="instruction-banner">
+          There is no upcoming selection round available yet.
+        </div>
+      ) : currentSelection ? (
+        <div className="locked-banner" role="status">
+          <h2>Selection Locked ✓</h2>
           <p>
-            Your selection:
-            <strong> {lockedSelection}</strong>
+            Your selection: <strong>{currentSelection.team.name}</strong>
           </p>
         </div>
       ) : (
         <div className="instruction-banner">
-          Select a team and lock your choice.
+          Select a team for Round {currentRound.round_number} and lock your choice.
         </div>
       )}
 
-      <div className="selection-layout">
-
-        <div className="fixtures-panel">
-
-          <h2>Fixtures</h2>
-
-          {fixtures.map((fixture) => (
-            <div
-              key={fixture.id}
-              className="fixture-card"
-            >
-
-              <div className="fixture-time">
-                {fixture.kickOff}
+      {currentRound && (
+        <div className="selection-layout">
+          <div className="fixtures-panel">
+            <div className="panel-heading">
+              <div>
+                <p className="section-label">Round {currentRound.round_number}</p>
+                <h2>Fixtures</h2>
               </div>
-
-              <div className="fixture-teams">
-
-                {[fixture.home, fixture.away].map(
-                  (team) => {
-                    const used =
-                      isTeamUsed(team);
-
-                    const selected =
-                      selectedTeam === team;
-
-                    return (
-                      <button
-                        key={team}
-                        className={`team-button
-                          ${
-                            selected
-                              ? "team-button-selected"
-                              : ""
-                          }
-                          ${
-                            used
-                              ? "team-button-used"
-                              : ""
-                          }
-                        `}
-                        disabled={
-                          used ||
-                          Boolean(
-                            lockedSelection
-                          )
-                        }
-                        onClick={() =>
-                          handleTeamSelection(
-                            team
-                          )
-                        }
-                      >
-
-                        <span>
-                          {team}
-                        </span>
-
-                        <small>
-                          {used
-                            ? `Used Week ${getUsedWeek(
-                                team
-                              )}`
-                            : selected
-                              ? "Selected"
-                              : "Available"}
-                        </small>
-
-                      </button>
-                    );
-                  }
-                )}
-
-              </div>
+              <span className="fixture-count">{fixtures.length} fixtures</span>
             </div>
-          ))}
 
-        </div>
-
-        <div className="selection-sidebar">
-
-          <div className="selection-summary">
-
-            <h2>Current Selection</h2>
-
-            {selectedTeam ? (
-              <>
-                <h3>{selectedTeam}</h3>
-
-                <p>
-                  Selected for Week 4
-                </p>
-              </>
+            {fixtures.length === 0 ? (
+              <p className="data-muted">No fixtures have been added to this round.</p>
             ) : (
-              <p>
-                No team selected
-              </p>
+              <div className="fixture-list">
+                {fixtures.map((fixture) => (
+                  <div key={fixture.id} className="fixture-card">
+                    <div className="fixture-time">
+                      {formatKickoff(fixture.kickoff)}
+                      {fixture.location && ` · ${fixture.location}`}
+                    </div>
+
+                    <div className="fixture-teams">
+                      {[fixture.home, fixture.away].map((team) => {
+                        const used = usedTeamIds.has(String(team.id));
+                        const selected = selectedTeamId === String(team.id);
+                        const unavailable = used || Boolean(currentSelection);
+
+                        return (
+                          <button
+                            key={team.id}
+                            type="button"
+                            className={`team-button ${selected ? "team-button-selected" : ""} ${used ? "team-button-used" : ""}`}
+                            disabled={unavailable}
+                            aria-pressed={selected}
+                            onClick={() => handleTeamSelection(team.id)}
+                          >
+                            <span className="team-name">{team.name}</span>
+                            <small className="team-status">
+                              {used ? "Already selected" : selected ? "Selected" : "Available"}
+                            </small>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
-
-            {!lockedSelection && (
-              <button
-                className="lock-selection-button"
-                disabled={
-                  !selectedTeam
-                }
-                onClick={
-                  openConfirmation
-                }
-                type="button"
-              >
-                Confirm and Lock
-              </button>
-            )}
-
-            <button
-              className="reset-selection-button"
-              onClick={
-                resetSelection
-              }
-              type="button"
-            >
-              Reset Selection
-            </button>
-
           </div>
 
-          <div className="used-teams-panel">
+          <div className="selection-sidebar">
+            <div className="selection-summary">
+              <h2>Current Selection</h2>
 
-            <h2>
-              Previously Used Teams
-            </h2>
+              {currentSelection ? (
+                <>
+                  <h3>{currentSelection.team.name}</h3>
+                  <p>Locked for Round {currentRound.round_number}</p>
+                </>
+              ) : selectedTeamId ? (
+                <>
+                  <h3>
+                    {fixtures
+                      .flatMap((fixture) => [fixture.home, fixture.away])
+                      .find((team) => String(team.id) === selectedTeamId)?.name}
+                  </h3>
+                  <p>Ready to lock for Round {currentRound.round_number}</p>
+                  <button
+                    className="lock-selection-button"
+                    type="button"
+                    onClick={() => setShowConfirmation(true)}
+                  >
+                    Confirm and Lock
+                  </button>
+                </>
+              ) : (
+                <p>No team selected</p>
+              )}
+            </div>
 
-            {previouslyUsedTeams.map(
-              (selection) => (
-                <div
-                  key={selection.team}
-                  className="used-team-row"
-                >
-                  <span>
-                    {selection.team}
-                  </span>
-
-                  <small>
-                    Week {selection.week}
-                  </small>
-                </div>
-              )
-            )}
-
+            <div className="used-teams-panel">
+              <h2>Previously Used Teams</h2>
+              {history.length === 0 ? (
+                <p className="data-muted">No previous selections.</p>
+              ) : (
+                history.map((selection) => (
+                  <div key={selection.id} className="used-team-row">
+                    <span>{selection.team.name}</span>
+                    <small>Round {selection.round.round_number}</small>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
-
         </div>
-
-      </div>
+      )}
 
       {showConfirmation && (
-        <div className="modal-overlay">
-
-          <div className="confirmation-modal">
-
-            <h2>
-              Lock in {selectedTeam}?
-            </h2>
-
-            <p>
-              Once confirmed,
-              this choice cannot be
-              changed.
-            </p>
+        <div className="modal-overlay" role="presentation">
+          <div
+            className="confirmation-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="confirmation-heading"
+          >
+            <h2 id="confirmation-heading">Lock this selection?</h2>
+            <p>Once confirmed, this choice cannot be changed.</p>
 
             <div className="modal-actions">
-
               <button
                 className="secondary-button"
-                onClick={
-                  cancelConfirmation
-                }
+                type="button"
+                disabled={saving}
+                onClick={() => setShowConfirmation(false)}
               >
                 Cancel
               </button>
-
               <button
                 className="confirm-button"
-                onClick={
-                  confirmSelection
-                }
+                type="button"
+                disabled={saving}
+                onClick={confirmSelection}
               >
-                Confirm Selection
+                {saving ? "Saving…" : "Confirm Selection"}
               </button>
-
             </div>
-
           </div>
-
         </div>
       )}
-
     </div>
   );
 }

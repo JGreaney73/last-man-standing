@@ -1,160 +1,87 @@
+import { useEffect, useState } from "react";
+import { supabase } from "../lib/supabase";
+import { useAuth } from "../context/useAuth";
+import { competition } from "../data/competition";
+import { loadRemainingTeams } from "../lib/userCompetitionData";
 import "./Dashboard.css";
 
 function Dashboard() {
+  const { user } = useAuth();
+  const [teams, setTeams] = useState([]);
+  const [selectionCount, setSelectionCount] = useState(0);
+  const [players, setPlayers] = useState([]);
+  const [currentWeek, setCurrentWeek] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const stats = {
-    prizePool: 2400,
-    totalPlayers: 150,
-    remainingPlayers: 87,
-    eliminatedPlayers: 63,
-    currentWeek: 4,
-  };
+  useEffect(() => {
+    const loadDashboard = async () => {
+      const [remainingResult, playersResult] = await Promise.all([
+        loadRemainingTeams(user.id),
+        supabase.from("leaderboard_players").select("id, competition_status"),
+      ]);
 
-  const remainingTeams = [
-    "Liverpool",
-    "Manchester City",
-    "Newcastle",
-    "Brighton",
-    "Brentford",
-    "West Ham",
-    "Crystal Palace",
-    "Bournemouth",
-  ];
+      if (playersResult.error) throw playersResult.error;
+      const { data: rounds, error: roundsError } = await supabase
+        .from("rounds")
+        .select("round_number, status")
+        .in("status", ["open", "scheduled"])
+        .order("round_number");
 
-  const weeklySurvivors = [
-    150,
-    142,
-    135,
-    124,
-    112,
-    103,
-    95,
-    87,
-  ];
+      if (roundsError) throw roundsError;
+      setTeams(remainingResult.teams);
+      setSelectionCount(remainingResult.selections.length);
+      setPlayers(playersResult.data ?? []);
+      setCurrentWeek(rounds?.[0]?.round_number ?? competition.currentWeek);
+    };
+
+    loadDashboard()
+      .catch((loadError) => setError(loadError.message))
+      .finally(() => setLoading(false));
+  }, [user.id]);
+
+  const activePlayers = players.filter((player) => player.competition_status === "active");
+  const eliminatedPlayers = players.filter((player) => player.competition_status === "eliminated");
+  const prizePool = competition.entryFee * players.length * 0.6;
 
   return (
     <div className="dashboard">
-
       <h1>Competition Dashboard</h1>
 
-      {/* Stats */}
+      {loading && <div className="data-status" role="status">Loading your competition data…</div>}
+      {error && <div className="data-error" role="alert">Your dashboard data is unavailable: {error}</div>}
 
       <div className="dashboard-grid">
-
-        <div className="stat-card">
-          <h3>Prize Pool</h3>
-          <div className="stat-value">
-            ${stats.prizePool}
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <h3>Current Week</h3>
-          <div className="stat-value">
-            {stats.currentWeek}
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <h3>Players Remaining</h3>
-          <div className="stat-value">
-            {stats.remainingPlayers}
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <h3>Eliminated</h3>
-          <div className="stat-value">
-            {stats.eliminatedPlayers}
-          </div>
-        </div>
-
+        <div className="stat-card"><h3>Prize Pool</h3><div className="stat-value">${prizePool.toLocaleString()}</div></div>
+        <div className="stat-card"><h3>Current Week</h3><div className="stat-value">{currentWeek ?? "—"}</div></div>
+        <div className="stat-card"><h3>Players Active</h3><div className="stat-value">{activePlayers.length}</div></div>
+        <div className="stat-card"><h3>Eliminated</h3><div className="stat-value">{eliminatedPlayers.length}</div></div>
       </div>
-
-      {/* Survivor Funnel */}
-
-      <div className="panel">
-        <h2>Survivor Progression</h2>
-
-        {weeklySurvivors.map((count, index) => {
-          const width =
-            (count / stats.totalPlayers) * 100;
-
-          return (
-            <div
-              key={index}
-              className="survivor-row"
-            >
-              <div className="week-label">
-                Week {index + 1}
-              </div>
-
-              <div className="bar-container">
-                <div
-                  className="bar"
-                  style={{
-                    width: `${width}%`,
-                  }}
-                >
-                  {count}
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Lower Panels */}
 
       <div className="two-column">
-
         <div className="panel">
-
-          <h2>Remaining Teams Available</h2>
-
-          <div className="teams-grid">
-
-            {remainingTeams.map((team) => (
-              <div
-                key={team}
-                className="team-chip"
-              >
-                {team}
-              </div>
-            ))}
-
-          </div>
-
+          <h2>Teams still available to you</h2>
+          {loading ? (
+            <p className="data-muted">Checking your selection history…</p>
+          ) : error ? (
+            <p className="data-muted">Available teams cannot be shown until your selection history is available.</p>
+          ) : teams.length === 0 ? (
+            <p className="data-muted">You have used every available team.</p>
+          ) : (
+            <div className="teams-grid">{teams.map((team) => <div key={team.id} className="team-chip">{team.name}</div>)}</div>
+          )}
+          {!loading && !error && <p className="data-muted">{selectionCount} previous selection{selectionCount === 1 ? "" : "s"} accounted for.</p>}
         </div>
 
         <div className="panel">
-
-          <h2>Recent Activity</h2>
-
+          <h2>Competition status</h2>
           <ul>
-            <li>
-              8 players eliminated after
-              selecting Chelsea
-            </li>
-
-            <li>
-              Liverpool was selected by 35%
-              of participants
-            </li>
-
-            <li>
-              87 players remain standing
-            </li>
-
-            <li>
-              Week 9 selections open now
-            </li>
+            <li>{activePlayers.length} active player{activePlayers.length === 1 ? "" : "s"}</li>
+            <li>{eliminatedPlayers.length} eliminated player{eliminatedPlayers.length === 1 ? "" : "s"}</li>
+            <li>Prize pool allocation: 60% of entry fees</li>
           </ul>
-
         </div>
-
       </div>
-
     </div>
   );
 }

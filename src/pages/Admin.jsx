@@ -3,15 +3,30 @@ import "./Admin.css";
 import { participants as participantData } from "../data/participants";
 import { fixtures as fixtureData } from "../data/fixtures";
 import { competition } from "../data/competition";
+import ParticipantUpload from "./ParticipantUpload";
+import FixtureManagement from "./FixtureManagement";
 
 const startingFixtures = fixtureData;
 
 function Admin() {
   const [fixtures, setFixtures] = useState(fixtureData);
 
-  const [participants, setParticipants] = useState(
-    participantData
-  );
+  const [participants, setParticipants] =
+  useState(() => {
+
+    const savedParticipants =
+      localStorage.getItem(
+        "lmsParticipants"
+      );
+
+    if (savedParticipants) {
+      return JSON.parse(
+        savedParticipants
+      );
+    }
+
+    return participantData;
+  });
 
   const [processingMessage, setProcessingMessage] =
     useState("");
@@ -21,7 +36,6 @@ function Admin() {
 
   const entryFee = competition.entryFee;
   const currentWeek = competition.currentWeek;
-  const season = competition.season;
 
   const entrants = participants.length;
 
@@ -64,18 +78,64 @@ function Admin() {
     playerId,
     newStatus
   ) => {
-    setParticipants((currentPlayers) =>
-      currentPlayers.map((player) =>
-        player.id === playerId
-          ? {
-              ...player,
-              status: newStatus,
-            }
-          : player
-      )
-    );
+
+    setParticipants((currentPlayers) => {
+
+      const updatedPlayers =
+        currentPlayers.map((player) =>
+          player.id === playerId
+            ? {
+                ...player,
+                status: newStatus,
+              }
+            : player
+        );
+
+      localStorage.setItem(
+        "lmsParticipants",
+        JSON.stringify(updatedPlayers)
+      );
+
+      return updatedPlayers;
+    });
 
     setProcessingMessage("");
+    setRoundProcessed(false);
+
+  };
+
+  const importParticipants = (
+    importedParticipants
+  ) => {
+
+    setParticipants(
+      importedParticipants
+    );
+
+    localStorage.setItem(
+      "lmsParticipants",
+      JSON.stringify(
+        importedParticipants
+      )
+    );
+  };
+
+  const resetParticipants = () => {
+
+    localStorage.removeItem(
+      "lmsParticipants"
+    );
+
+    setParticipants(
+      participantData.map((player) => ({
+        ...player,
+      }))
+    );
+
+    setProcessingMessage(
+      "Participant list reset to default data."
+    );
+
     setRoundProcessed(false);
   };
 
@@ -291,6 +351,24 @@ function Admin() {
             ${prizePool.toLocaleString()}
           </div>
         </div>
+      </div>
+
+      <ParticipantUpload
+        onImport={importParticipants}
+      />
+
+      <FixtureManagement />
+
+      <div className="participant-admin-actions">
+
+        <button
+          className="reset-simulator-btn"
+          onClick={resetParticipants}
+          type="button"
+        >
+          Reset Participant List
+        </button>
+
       </div>
 
       <section className="admin-section">

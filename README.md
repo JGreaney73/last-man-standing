@@ -1,16 +1,58 @@
-# React + Vite
+# Last Man Standing
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React/Vite frontend for the Aspendale Stingrays Last Man Standing competition.
+The application uses Supabase Auth, Supabase Postgres, and private Supabase
+Storage. Production hosting is configured for Vercel.
 
-Currently, two official plugins are available:
+## Local setup
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+1. Create a Supabase project.
+2. Run [`supabase/schema.sql`](supabase/schema.sql) in the Supabase SQL Editor.
+3. Copy `.env.example` to `.env.local` and add the Supabase URL and anon key.
+4. Create users in Supabase Authentication.
+5. Promote at least two approved users to administrators:
 
-## React Compiler
+   ```sql
+   update public.profiles
+   set role = 'admin'
+   where id in ('AUTH_USER_UUID_1', 'AUTH_USER_UUID_2');
+   ```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+6. Start the app:
 
-## Expanding the ESLint configuration
+   ```bash
+   npm install
+   npm run dev
+   ```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Supabase Auth uses email/password credentials. Passwords and the service-role
+key must never be stored in frontend code or committed to GitHub.
+
+## Fixture import
+
+The supplied `epl-2026-GMTStandardTime.csv` contains 329 fixtures for rounds
+6–38. Import it from a trusted local machine after applying the schema:
+
+```bash
+SUPABASE_URL="https://your-project.supabase.co" \
+SUPABASE_SERVICE_ROLE_KEY="your-service-role-key" \
+npm run seed:fixtures -- "/path/to/epl-2026-GMTStandardTime.csv"
+```
+
+The CSV times are interpreted as GMT/UTC. The service-role key is used only by
+this local import command and must never be added to Vercel or `.env.local`.
+
+## Commands
+
+```bash
+npm run dev
+npm run lint
+npm run build
+npm run preview
+```
+
+## Production deployment
+
+See [`docs/production-deployment.md`](docs/production-deployment.md) for the
+complete GitHub, Supabase, Vercel, migration, authentication, verification,
+and rollback procedure.

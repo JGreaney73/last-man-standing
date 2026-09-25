@@ -71,10 +71,24 @@
 
 .team-chip {
   background: var(--stingrays-light);
-  color: var(--stingrays-dark);
+  color: var(--stingrays-navy);
   padding: 10px;
   border-radius: 16px;
   border: 1px solid var(--stingrays-orange);
+}
+
+.data-status,
+.data-muted {
+  color: #607284;
+}
+
+.data-error {
+  padding: 14px 16px;
+  margin-bottom: 20px;
+  color: #a51f1f;
+  background: #fdecec;
+  border: 1px solid #e29b9b;
+  border-radius: 9px;
 }
 
 @media (max-width: 768px) {

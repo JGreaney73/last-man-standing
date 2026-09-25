@@ -11,6 +11,12 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+button,
+input,
+select {
+  font: inherit;
+}
+
 .dashboard {
   max-width: 1200px;
   margin: auto;
@@ -112,7 +118,7 @@ li {
 
 .navbar {
   background: var(--stingrays-navy);
-  padding: 15px;
+  padding: 12px 20px;
   display: flex;
   gap: 10px;
 }
@@ -121,6 +127,7 @@ li {
   background: white;
   color: var(--stingrays-navy);
   border: none;
+  min-height: 44px;
   padding: 10px 15px;
   border-radius: 8px;
   cursor: pointer;
@@ -129,6 +136,11 @@ li {
 .navbar button:hover {
   background: var(--stingrays-orange);
   color: white;
+}
+
+.navbar button[aria-current="page"] {
+  color: white;
+  background: var(--stingrays-orange);
 }
 
 .page-content {
@@ -144,19 +156,20 @@ li {
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 190px;
 }
 
 .club-logo {
-  height: 70px;
-  width: auto;
+  width: 52px;
+  height: 52px;
   background: white;
   border-radius: 50%;
   padding: 3px;
 }
 
-.brand-title {
+.page-title {
   color: white;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: bold;
 }
 
@@ -168,4 +181,76 @@ li {
 .nav-buttons {
   display: flex;
   gap: 10px;
+  justify-content: flex-end;
+  overflow-x: auto;
+}
+
+.skip-link {
+  position: absolute;
+  z-index: 10;
+  top: -100px;
+  left: 12px;
+  padding: 10px 14px;
+  color: white;
+  background: var(--stingrays-orange);
+}
+
+.skip-link:focus {
+  top: 12px;
+}
+
+:where(button, a, input, select):focus-visible {
+  outline: 3px solid #ffbf47;
+  outline-offset: 2px;
+}
+
+.setup-state,
+.access-state {
+  display: grid;
+  min-height: 60vh;
+  padding: 32px;
+  text-align: center;
+  place-content: center;
+}
+
+.setup-state p,
+.access-state p {
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+@media (max-width: 900px) {
+  .navbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .navbar-brand {
+    min-width: 0;
+  }
+
+  .nav-buttons {
+    justify-content: flex-start;
+    padding-bottom: 2px;
+  }
+}
+
+@media (max-width: 520px) {
+  .page-content {
+    padding: 12px;
+  }
+
+  .navbar {
+    padding: 12px;
+  }
+
+  .nav-buttons {
+    gap: 6px;
+  }
+
+  .navbar button {
+    flex: 0 0 auto;
+    padding: 9px 12px;
+    font-size: 14px;
+  }
 }
