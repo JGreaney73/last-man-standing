@@ -1,5 +1,14 @@
-.dashboard h1 {
+.dashboard-header {
+  padding: 30px;
   margin-bottom: 20px;
+  color: white;
+  background: linear-gradient(135deg, var(--stingrays-navy), var(--stingrays-orange));
+  border-radius: 18px;
+}
+
+.dashboard-header h1 {
+  margin: 0;
+  font-size: 36px;
 }
 
 .dashboard-grid {
@@ -92,6 +101,14 @@
 }
 
 @media (max-width: 768px) {
+  .dashboard-header {
+    padding: 22px;
+  }
+
+  .dashboard-header h1 {
+    font-size: 28px;
+  }
+
   .two-column {
     grid-template-columns: 1fr;
   }

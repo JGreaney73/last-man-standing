@@ -27,14 +27,15 @@ function Selection() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [now, setNow] = useState(0);
 
-  const loadSelectionData = useCallback(async () => {
-    setLoading(true);
+  const loadSelectionData = useCallback(async ({ showLoading = true } = {}) => {
+    if (showLoading) setLoading(true);
     setError("");
 
     const { data: rounds, error: roundsError } = await supabase
       .from("rounds")
-      .select("id, round_number, name, status")
+      .select("id, round_number, name, status, first_kickoff")
       .in("status", ["open", "scheduled"])
       .order("round_number");
 
@@ -48,7 +49,7 @@ function Selection() {
       setFixtures([]);
       setHistory([]);
       setSelectedTeamId("");
-      setLoading(false);
+      if (showLoading) setLoading(false);
       return;
     }
 
@@ -95,8 +96,22 @@ function Selection() {
     const roundSelection = selectionDetails.find(
       (selection) => selection.round_id === round.id
     );
+    const fixtureKickoffs = (fixtureRows ?? [])
+      .map((fixture) => new Date(fixture.kickoff).getTime())
+      .filter(Number.isFinite);
+    const firstKickoff = fixtureKickoffs.length > 0
+      ? Math.min(...fixtureKickoffs)
+      : round.first_kickoff
+        ? new Date(round.first_kickoff).getTime()
+        : null;
 
-    setCurrentRound(round);
+    setNow(Date.now());
+    setCurrentRound({
+      ...round,
+      lockout_at: Number.isFinite(firstKickoff)
+        ? new Date(firstKickoff - 2 * 60 * 60 * 1000).toISOString()
+        : null,
+    });
     setFixtures(
       (fixtureRows ?? []).map((fixture) => ({
         ...fixture,
@@ -108,7 +123,7 @@ function Selection() {
     setSelectedTeamId(roundSelection?.team_id
       ? String(roundSelection.team_id)
       : "");
-    setLoading(false);
+    if (showLoading) setLoading(false);
   }, [user.id]);
 
   useEffect(() => {
@@ -122,18 +137,45 @@ function Selection() {
     return () => window.clearTimeout(timerId);
   }, [loadSelectionData]);
 
+  useEffect(() => {
+    const timerId = window.setInterval(() => setNow(Date.now()), 15000);
+    return () => window.clearInterval(timerId);
+  }, []);
+
   const currentSelection = currentRound
     ? history.find((selection) => selection.round_id === currentRound.id)
     : null;
+  const lockoutTime = currentRound?.lockout_at
+    ? new Date(currentRound.lockout_at).getTime()
+    : null;
+  const isLocked = Boolean(
+    currentRound &&
+    (currentRound.status === "locked" || lockoutTime === null || now >= lockoutTime)
+  );
+  const selectionIsLocked = isLocked || Boolean(currentSelection?.is_automatic);
 
   const usedTeamIds = new Set(
-    history.map((selection) => String(selection.team_id))
+    history
+      .filter((selection) => selection.round_id !== currentRound?.id)
+      .map((selection) => String(selection.team_id))
   );
 
   const handleTeamSelection = (teamId) => {
-    if (currentSelection || usedTeamIds.has(String(teamId))) return;
+    if (selectionIsLocked || usedTeamIds.has(String(teamId))) return;
     setSelectedTeamId(String(teamId));
   };
+
+  useEffect(() => {
+    if (!isLocked || currentSelection || !currentRound) return undefined;
+
+    const timerId = window.setInterval(() => {
+      loadSelectionData({ showLoading: false }).catch((loadError) => {
+        setError(loadError.message);
+      });
+    }, 15000);
+
+    return () => window.clearInterval(timerId);
+  }, [currentRound, currentSelection, isLocked, loadSelectionData]);
 
   const confirmSelection = async () => {
     const selectedFixture = fixtures.find(
@@ -142,18 +184,31 @@ function Selection() {
         String(fixture.away_team_id) === selectedTeamId
     );
 
-    if (!currentRound || !selectedFixture || currentSelection) return;
+    if (
+      !currentRound ||
+      !selectedFixture ||
+      selectionIsLocked ||
+      !selectedTeamId ||
+      (currentSelection && String(currentSelection.team_id) === selectedTeamId)
+    ) return;
+
+    if (lockoutTime === null || Date.now() >= lockoutTime) {
+      setError("Selections are now locked for this round.");
+      setNow(Date.now());
+      return;
+    }
 
     setSaving(true);
     setError("");
 
-    const { error: insertError } = await supabase.from("selections").insert({
+    const { error: insertError } = await supabase.from("selections").upsert({
       user_id: user.id,
       round_id: currentRound.id,
       fixture_id: selectedFixture.id,
       team_id: Number(selectedTeamId),
       is_automatic: false,
-    });
+      selection_source: "MANUAL",
+    }, { onConflict: "user_id,round_id" });
 
     if (insertError) {
       setError(insertError.message);
@@ -182,16 +237,27 @@ function Selection() {
         <div className="instruction-banner">
           There is no upcoming selection round available yet.
         </div>
-      ) : currentSelection ? (
+      ) : currentSelection?.is_automatic ? (
         <div className="locked-banner" role="status">
-          <h2>Selection Locked ✓</h2>
+          <h2>Selection Locked</h2>
           <p>
-            Your selection: <strong>{currentSelection.team.name}</strong>
+            No selection was submitted before the deadline. {currentSelection.team.name} was automatically allocated.
+          </p>
+        </div>
+      ) : isLocked ? (
+        <div className="locked-banner" role="status">
+          <h2>Selections are now locked for this round.</h2>
+          <p>
+            {currentSelection ? (
+              <>Your selection: <strong>{currentSelection.team.name}</strong></>
+            ) : "No selection was submitted before the deadline. Automatic allocation is being processed."}
           </p>
         </div>
       ) : (
         <div className="instruction-banner">
-          Select a team for Round {currentRound.round_number} and lock your choice.
+          {currentSelection
+            ? `You can change your selection until ${new Date(currentRound.lockout_at).toLocaleString()}.`
+            : `Select a team for Round ${currentRound.round_number}. Changes are allowed until two hours before kickoff.`}
         </div>
       )}
 
@@ -221,7 +287,7 @@ function Selection() {
                       {[fixture.home, fixture.away].map((team) => {
                         const used = usedTeamIds.has(String(team.id));
                         const selected = selectedTeamId === String(team.id);
-                        const unavailable = used || Boolean(currentSelection);
+                        const unavailable = used || selectionIsLocked;
 
                         return (
                           <button
@@ -250,10 +316,33 @@ function Selection() {
             <div className="selection-summary">
               <h2>Current Selection</h2>
 
-              {currentSelection ? (
+              {selectedTeamId && currentSelection && String(currentSelection.team_id) !== selectedTeamId ? (
+                <>
+                  <h3>
+                    {fixtures
+                      .flatMap((fixture) => [fixture.home, fixture.away])
+                      .find((team) => String(team.id) === selectedTeamId)?.name}
+                  </h3>
+                  <p>Ready to update your selection</p>
+                  <button
+                    className="lock-selection-button"
+                    type="button"
+                    disabled={saving}
+                    onClick={() => setShowConfirmation(true)}
+                  >
+                    Update Selection
+                  </button>
+                </>
+              ) : currentSelection ? (
                 <>
                   <h3>{currentSelection.team.name}</h3>
-                  <p>Locked for Round {currentRound.round_number}</p>
+                  <p>
+                    {currentSelection.is_automatic
+                      ? "Automatically allocated"
+                      : isLocked
+                        ? `Locked for Round ${currentRound.round_number}`
+                        : `Saved for Round ${currentRound.round_number}`}
+                  </p>
                 </>
               ) : selectedTeamId ? (
                 <>
@@ -262,13 +351,14 @@ function Selection() {
                       .flatMap((fixture) => [fixture.home, fixture.away])
                       .find((team) => String(team.id) === selectedTeamId)?.name}
                   </h3>
-                  <p>Ready to lock for Round {currentRound.round_number}</p>
+                  <p>Ready to save for Round {currentRound.round_number}</p>
                   <button
                     className="lock-selection-button"
                     type="button"
+                    disabled={saving || Boolean(currentSelection && String(currentSelection.team_id) === selectedTeamId)}
                     onClick={() => setShowConfirmation(true)}
                   >
-                    Confirm and Lock
+                    {currentSelection ? "Update Selection" : "Save Selection"}
                   </button>
                 </>
               ) : (
@@ -301,8 +391,8 @@ function Selection() {
             aria-modal="true"
             aria-labelledby="confirmation-heading"
           >
-            <h2 id="confirmation-heading">Lock this selection?</h2>
-            <p>Once confirmed, this choice cannot be changed.</p>
+            <h2 id="confirmation-heading">{currentSelection ? "Update your selection?" : "Save this selection?"}</h2>
+            <p>You can change your selection until two hours before the round's first kickoff.</p>
 
             <div className="modal-actions">
               <button
@@ -319,7 +409,7 @@ function Selection() {
                 disabled={saving}
                 onClick={confirmSelection}
               >
-                {saving ? "Saving…" : "Confirm Selection"}
+                {saving ? "Saving…" : currentSelection ? "Update Selection" : "Save Selection"}
               </button>
             </div>
           </div>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Dashboard from "./pages/Dashboard";
 import Selection from "./pages/Selection";
 import Journey from "./pages/Journey";
@@ -17,9 +17,38 @@ const pageTitles = {
   admin: "Admin",
 };
 
+const pagePaths = {
+  dashboard: "/dashboard",
+  selection: "/selection",
+  journey: "/journey",
+  leaderboard: "/leaderboard",
+  admin: "/admin",
+};
+
+function pageFromPath(pathname) {
+  return Object.entries(pagePaths).find(([, path]) => path === pathname)?.[0]
+    ?? "dashboard";
+}
+
 function App() {
-  const [page, setPage] = useState("dashboard");
+  const [page, setPage] = useState(() => pageFromPath(window.location.pathname));
   const { configured, loading, user, isAdmin, signOut } = useAuth();
+
+  useEffect(() => {
+    const handlePopState = () => setPage(pageFromPath(window.location.pathname));
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
+  const navigate = (nextPage) => {
+    window.history.pushState({}, "", pagePaths[nextPage]);
+    setPage(nextPage);
+  };
+
+  const handleSignedIn = () => {
+    window.history.replaceState({}, "", pagePaths.dashboard);
+    setPage("dashboard");
+  };
 
   if (!configured) {
     return (
@@ -38,7 +67,7 @@ function App() {
   }
 
   if (!user) {
-    return <Login />;
+    return <Login onSignedIn={handleSignedIn} />;
   }
 
   const renderPage = () => {
@@ -81,19 +110,19 @@ function App() {
         </div>
 
         <div className="nav-buttons">
-          <button type="button" aria-current={page === "dashboard" ? "page" : undefined} onClick={() => setPage("dashboard")}>
+          <button type="button" aria-current={page === "dashboard" ? "page" : undefined} onClick={() => navigate("dashboard")}>
             Dashboard
           </button>
-          <button type="button" aria-current={page === "selection" ? "page" : undefined} onClick={() => setPage("selection")}>
+          <button type="button" aria-current={page === "selection" ? "page" : undefined} onClick={() => navigate("selection")}>
             Make Selection
           </button>
-          <button type="button" aria-current={page === "journey" ? "page" : undefined} onClick={() => setPage("journey")}>
+          <button type="button" aria-current={page === "journey" ? "page" : undefined} onClick={() => navigate("journey")}>
             My Journey
           </button>
-          <button type="button" aria-current={page === "leaderboard" ? "page" : undefined} onClick={() => setPage("leaderboard")}>
+          <button type="button" aria-current={page === "leaderboard" ? "page" : undefined} onClick={() => navigate("leaderboard")}>
             Leaderboard
           </button>
-          <button type="button" aria-current={page === "admin" ? "page" : undefined} onClick={() => setPage("admin")}>
+          <button type="button" aria-current={page === "admin" ? "page" : undefined} onClick={() => navigate("admin")}>
             Admin
           </button>
           <button type="button" onClick={signOut}>Sign out</button>

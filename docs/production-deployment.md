@@ -17,10 +17,12 @@ Vercel or committed to GitHub.
 
 1. Push the repository to GitHub.
 2. Create or select the production Supabase project.
-3. For a new Supabase project, run `supabase/schema.sql` once in the SQL Editor.
+3. For a new Supabase project, run `supabase/schema.sql` in the SQL Editor,
+   followed by `supabase/migrations/20260926_phase4_selection_lockout.sql`.
 4. For an existing project, run these migrations in order:
    - `supabase/migrations/20260925_phase2_fixture_location.sql`
    - `supabase/migrations/20260925_phase3_dashboard_leaderboard.sql`
+   - `supabase/migrations/20260926_phase4_selection_lockout.sql`
 5. In Supabase Authentication, create the team accounts. The profile trigger
    creates a corresponding `public.profiles` row.
 6. Promote at least two administrators:
@@ -41,7 +43,9 @@ Vercel or committed to GitHub.
    ```
 
 9. Set the first competition round to `open` only when selections should be
-   accepted. Leave future rounds as `scheduled`.
+   accepted. Leave future rounds as `scheduled`. The lockout migration installs
+   a Supabase Cron job that locks overdue rounds and allocates missing picks
+   within one minute of the deadline.
 
 ## Vercel deployment
 
@@ -72,6 +76,10 @@ Vercel or committed to GitHub.
 - Create, edit, and delete a test fixture as an administrator.
 - Confirm a standard user cannot modify fixtures.
 - Make a test selection and verify it persists after refresh.
+- Change that selection before lockout and verify the replacement persists.
+- Confirm the selection is rejected by the database after the two-hour cutoff.
+- Confirm an overdue active competitor without a selection receives the
+   alphabetically first unused team with `selection_source = 'AUTO'`.
 - Confirm another user cannot see that selection history.
 - Check browser console and Vercel deployment logs for errors.
 
@@ -93,6 +101,8 @@ where table_schema = 'public'
 The fixture count should match the imported source file. At least two admin
 profiles should exist. `authenticated` should have `SELECT` on
 `leaderboard_players`; anonymous/public access should not be granted.
+The `allocate-overdue-round-selections` job should appear in `cron.job` and
+run once per minute.
 
 ## Rollback
 
@@ -131,3 +141,9 @@ the user is authenticated. Inspect the browser console and Supabase logs.
 
 Check that the relevant RLS policy exists and that the request is authenticated.
 Do not solve this by exposing the service-role key in the frontend.
+
+### Automatic selections are not being allocated
+
+Confirm the lockout migration completed, `pg_cron` is enabled, and the
+`allocate-overdue-round-selections` job is present in `cron.job`. Check recent
+job runs in `cron.job_run_details` and confirm the round has a kickoff time.

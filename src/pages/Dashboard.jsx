@@ -46,7 +46,9 @@ function Dashboard() {
 
   return (
     <div className="dashboard">
-      <h1>Competition Dashboard</h1>
+      <header className="dashboard-header">
+        <h1>Competition Dashboard</h1>
+      </header>
 
       {loading && <div className="data-status" role="status">Loading your competition data…</div>}
       {error && <div className="data-error" role="alert">Your dashboard data is unavailable: {error}</div>}

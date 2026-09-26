@@ -7,7 +7,7 @@ export async function loadOwnSelections(userId) {
 
   const { data, error } = await supabase
     .from("selections")
-    .select("id, round_id, fixture_id, team_id, is_automatic, selected_at")
+    .select("id, round_id, fixture_id, team_id, is_automatic, selection_source, selected_at")
     .eq("user_id", userId)
     .order("selected_at", { ascending: true });
 

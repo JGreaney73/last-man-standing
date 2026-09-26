@@ -72,7 +72,7 @@ function Journey() {
                     </div>
                     <div>Selected: {selection.team.name}</div>
                     <div className="result">
-                      {selection.is_automatic
+                      {selection.is_automatic || selection.selection_source === "AUTO"
                         ? "Automatically selected"
                         : "Selection recorded"}
                     </div>

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAuth } from "../context/useAuth";
 import "./Login.css";
 
-function Login() {
+function Login({ onSignedIn }) {
   const { signIn, error } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,7 +20,11 @@ function Login() {
 
     setSubmitting(true);
     const result = await signIn(email.trim(), password);
-    if (result.error) setFormError("Invalid email or password.");
+    if (result.error) {
+      setFormError("Invalid email or password.");
+    } else {
+      onSignedIn();
+    }
     setSubmitting(false);
   };
 
