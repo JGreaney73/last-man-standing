@@ -56,3 +56,4 @@ npm run preview
 See [`docs/production-deployment.md`](docs/production-deployment.md) for the
 complete GitHub, Supabase, Vercel, migration, authentication, verification,
 and rollback procedure.
+# last-man-standing
