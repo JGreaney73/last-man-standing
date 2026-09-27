@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import Dashboard from "./pages/Dashboard";
 import Selection from "./pages/Selection";
 import Journey from "./pages/Journey";
-import Admin from "./pages/Admin";
+import Admin from "./pages/AdminConsole";
 import Leaderboard from "./pages/Leaderboard";
 import stingraysLogo from "./assets/stingrays-logo.png";
 import Login from "./components/Login";

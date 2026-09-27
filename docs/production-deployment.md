@@ -6,7 +6,6 @@
 - Hosting: Vercel
 - Authentication: Supabase Auth
 - Database: Supabase Postgres
-- Private imports: Supabase Storage
 - Version control: GitHub
 
 The browser uses only the Supabase project URL and anon key. The Supabase
@@ -18,11 +17,12 @@ Vercel or committed to GitHub.
 1. Push the repository to GitHub.
 2. Create or select the production Supabase project.
 3. For a new Supabase project, run `supabase/schema.sql` in the SQL Editor,
-   followed by `supabase/migrations/20260926_phase4_selection_lockout.sql`.
+   followed by the Phase 4 and Phase 5 migrations below.
 4. For an existing project, run these migrations in order:
    - `supabase/migrations/20260925_phase2_fixture_location.sql`
    - `supabase/migrations/20260925_phase3_dashboard_leaderboard.sql`
    - `supabase/migrations/20260926_phase4_selection_lockout.sql`
+   - `supabase/migrations/20260927_phase5_round_results.sql`
 5. In Supabase Authentication, create the team accounts. The profile trigger
    creates a corresponding `public.profiles` row.
 6. Promote at least two administrators:
@@ -33,8 +33,7 @@ Vercel or committed to GitHub.
    where id in ('ADMIN_USER_UUID_1', 'ADMIN_USER_UUID_2');
    ```
 
-7. Verify the `participant-imports` storage bucket is private.
-8. Import the supplied fixture list from a trusted local machine:
+7. Import the supplied fixture list from a trusted local machine:
 
    ```bash
    SUPABASE_URL="https://your-project.supabase.co" \
@@ -42,10 +41,12 @@ Vercel or committed to GitHub.
    npm run seed:fixtures -- "/path/to/epl-2026-GMTStandardTime.csv"
    ```
 
-9. Set the first competition round to `open` only when selections should be
+8. Set the first competition round to `open` only when selections should be
    accepted. Leave future rounds as `scheduled`. The lockout migration installs
    a Supabase Cron job that locks overdue rounds and allocates missing picks
    within one minute of the deadline.
+9. Round draws eliminate by default. Set `rounds.draw_rule` to `survive` for a
+   specific round before processing if that round uses a different draw rule.
 
 ## Vercel deployment
 
@@ -73,8 +74,15 @@ Vercel or committed to GitHub.
 - Confirm Admin is unavailable to the standard user.
 - Sign in as each administrator and verify Admin access.
 - Confirm fixture count and round/date/time values.
-- Create, edit, and delete a test fixture as an administrator.
-- Confirm a standard user cannot modify fixtures.
+- Confirm fixture schedule details are read-only in Admin.
+- Enter and save scores for every fixture in a test round.
+- Confirm processing is blocked until every fixture has a saved result.
+- Process the round and verify selected-team wins survive while losses and
+   draws eliminate competitors.
+- Confirm a second processing attempt requires explicit confirmation and that
+   both processing runs remain in the audit history.
+- Confirm score changes to an earlier round are blocked after a later round
+   has been processed.
 - Make a test selection and verify it persists after refresh.
 - Change that selection before lockout and verify the replacement persists.
 - Confirm the selection is rejected by the database after the two-hour cutoff.
@@ -102,7 +110,9 @@ The fixture count should match the imported source file. At least two admin
 profiles should exist. `authenticated` should have `SELECT` on
 `leaderboard_players`; anonymous/public access should not be granted.
 The `allocate-overdue-round-selections` job should appear in `cron.job` and
-run once per minute.
+run once per minute. Round scores are stored on `fixtures`; each processing run
+and participant outcome is retained in `round_processing_runs` and
+`round_processing_entries`.
 
 ## Rollback
 
