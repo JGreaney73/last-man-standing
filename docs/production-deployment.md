@@ -17,12 +17,13 @@ Vercel or committed to GitHub.
 1. Push the repository to GitHub.
 2. Create or select the production Supabase project.
 3. For a new Supabase project, run `supabase/schema.sql` in the SQL Editor,
-   followed by the Phase 4 and Phase 5 migrations below.
+   followed by the Phase 4, Phase 5 and Phase 6 migrations below.
 4. For an existing project, run these migrations in order:
    - `supabase/migrations/20260925_phase2_fixture_location.sql`
    - `supabase/migrations/20260925_phase3_dashboard_leaderboard.sql`
    - `supabase/migrations/20260926_phase4_selection_lockout.sql`
    - `supabase/migrations/20260927_phase5_round_results.sql`
+   - `supabase/migrations/20260928_phase6_competition_entries.sql`
 5. In Supabase Authentication, create the team accounts. The profile trigger
    creates a corresponding `public.profiles` row.
 6. Promote at least two administrators:
@@ -47,6 +48,9 @@ Vercel or committed to GitHub.
    within one minute of the deadline.
 9. Round draws eliminate by default. Set `rounds.draw_rule` to `survive` for a
    specific round before processing if that round uses a different draw rule.
+10. Phase 6 creates one competition entry per existing profile and moves its
+   current status and selection history onto that entry. Additional entries
+   can be created until the first-round lockout or until any round is processed.
 
 ## Vercel deployment
 
@@ -70,6 +74,13 @@ Vercel or committed to GitHub.
 - Open the Vercel URL in a private browser window.
 - Confirm unauthenticated users see the login screen.
 - Sign in as a standard user.
+- Verify the existing account has one migrated entry and its selection history
+   is unchanged; create a second entry before competition processing begins.
+- Make distinct selections for each entry and verify their histories and used
+   team lists remain independent.
+- Eliminate one entry and confirm the user remains signed in, can browse its
+   history/results, cannot submit picks for it, and can switch to a still-active
+   entry.
 - Confirm Dashboard, Selection, Journey, and Leaderboard load.
 - Confirm Admin is unavailable to the standard user.
 - Sign in as each administrator and verify Admin access.
@@ -96,19 +107,19 @@ Vercel or committed to GitHub.
 ```sql
 select count(*) from public.fixtures;
 
-select count(*)
-from public.profiles
-where role = 'admin';
+select competition_status, count(*)
+from public.competition_entries
+group by competition_status;
 
 select grantee, privilege_type
 from information_schema.role_table_grants
 where table_schema = 'public'
-  and table_name = 'leaderboard_players';
+   and table_name = 'leaderboard_entries';
 ```
 
 The fixture count should match the imported source file. At least two admin
-profiles should exist. `authenticated` should have `SELECT` on
-`leaderboard_players`; anonymous/public access should not be granted.
+profiles should exist. Authenticated users should see their own entries, and
+the `leaderboard_entries` view should remain unavailable to anonymous users.
 The `allocate-overdue-round-selections` job should appear in `cron.job` and
 run once per minute. Round scores are stored on `fixtures`; each processing run
 and participant outcome is retained in `round_processing_runs` and

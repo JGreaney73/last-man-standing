@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
-import { useAuth } from "../context/useAuth";
+import { useCompetitionEntry } from "../context/useCompetitionEntry";
 import { competition } from "../data/competition";
 import { loadRemainingTeams } from "../lib/userCompetitionData";
 import "./Dashboard.css";
 
 function Dashboard() {
-  const { user } = useAuth();
+  const { currentEntry, loadingEntries } = useCompetitionEntry();
   const [teams, setTeams] = useState([]);
   const [selectionCount, setSelectionCount] = useState(0);
   const [players, setPlayers] = useState([]);
@@ -16,9 +16,10 @@ function Dashboard() {
 
   useEffect(() => {
     const loadDashboard = async () => {
+      if (!currentEntry) return;
       const [remainingResult, playersResult] = await Promise.all([
-        loadRemainingTeams(user.id),
-        supabase.from("leaderboard_players").select("id, competition_status"),
+        loadRemainingTeams(currentEntry.id),
+        supabase.from("leaderboard_entries").select("id, entry_name, display_name, competition_status"),
       ]);
 
       if (playersResult.error) throw playersResult.error;
@@ -38,7 +39,7 @@ function Dashboard() {
     loadDashboard()
       .catch((loadError) => setError(loadError.message))
       .finally(() => setLoading(false));
-  }, [user.id]);
+  }, [currentEntry, loadingEntries]);
 
   const activePlayers = players.filter((player) => player.competition_status === "active");
   const eliminatedPlayers = players.filter((player) => player.competition_status === "eliminated");
@@ -48,7 +49,17 @@ function Dashboard() {
     <div className="dashboard">
       <header className="dashboard-header">
         <h1>Competition Dashboard</h1>
+        {currentEntry && <p className={`entry-status-pill ${currentEntry.competition_status === "eliminated" ? "entry-status-pill-out" : ""}`}>
+          {currentEntry.name} · {currentEntry.competition_status === "active" ? "Active" : "Eliminated"}
+        </p>}
       </header>
+
+      {currentEntry?.competition_status === "eliminated" && (
+        <div className="entry-eliminated-banner" role="status">
+          <strong>Eliminated</strong>
+          <span>Your selected team did not win. This entry is no longer active, but fixtures, standings and pick history remain available.</span>
+        </div>
+      )}
 
       {loading && <div className="data-status" role="status">Loading your competition data…</div>}
       {error && <div className="data-error" role="alert">Your dashboard data is unavailable: {error}</div>}

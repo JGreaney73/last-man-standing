@@ -6,6 +6,8 @@ import Admin from "./pages/AdminConsole";
 import Leaderboard from "./pages/Leaderboard";
 import stingraysLogo from "./assets/stingrays-logo.png";
 import Login from "./components/Login";
+import EntrySwitcher from "./components/EntrySwitcher";
+import { CompetitionEntryProvider } from "./context/CompetitionEntryContext";
 import { useAuth } from "./context/useAuth";
 import "./App.css";
 
@@ -97,6 +99,7 @@ function App() {
   };
 
   return (
+    <CompetitionEntryProvider userId={user.id}>
     <div className="app-shell">
       <a className="skip-link" href="#main-content">Skip to content</a>
 
@@ -127,12 +130,14 @@ function App() {
           </button>
           <button type="button" onClick={signOut}>Sign out</button>
         </div>
+        <EntrySwitcher />
       </nav>
 
       <main id="main-content" className="page-content">
         {renderPage()}
       </main>
     </div>
+    </CompetitionEntryProvider>
   );
 }
 

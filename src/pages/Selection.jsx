@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "../context/useAuth";
+import { useCompetitionEntry } from "../context/useCompetitionEntry";
 import { supabase } from "../lib/supabase";
 import {
   loadOwnSelections,
@@ -19,6 +20,7 @@ function formatKickoff(value) {
 
 function Selection() {
   const { user } = useAuth();
+  const { currentEntry, loadingEntries } = useCompetitionEntry();
   const [currentRound, setCurrentRound] = useState(null);
   const [fixtures, setFixtures] = useState([]);
   const [history, setHistory] = useState([]);
@@ -30,6 +32,10 @@ function Selection() {
   const [now, setNow] = useState(0);
 
   const loadSelectionData = useCallback(async ({ showLoading = true } = {}) => {
+    if (!currentEntry) {
+      if (showLoading) setLoading(loadingEntries);
+      return;
+    }
     if (showLoading) setLoading(true);
     setError("");
 
@@ -91,7 +97,7 @@ function Selection() {
       throw new Error("One or more upcoming fixtures has incomplete team data.");
     }
 
-    const selections = await loadOwnSelections(user.id);
+    const selections = await loadOwnSelections(currentEntry.id);
     const selectionDetails = await loadSelectionDetails(selections);
     const roundSelection = selectionDetails.find(
       (selection) => selection.round_id === round.id
@@ -124,7 +130,7 @@ function Selection() {
       ? String(roundSelection.team_id)
       : "");
     if (showLoading) setLoading(false);
-  }, [user.id]);
+  }, [currentEntry, loadingEntries]);
 
   useEffect(() => {
     const timerId = window.setTimeout(() => {
@@ -153,6 +159,7 @@ function Selection() {
     (currentRound.status === "locked" || lockoutTime === null || now >= lockoutTime)
   );
   const selectionIsLocked = isLocked || Boolean(currentSelection?.is_automatic);
+  const entryIsEliminated = currentEntry?.competition_status === "eliminated";
 
   const usedTeamIds = new Set(
     history
@@ -161,7 +168,7 @@ function Selection() {
   );
 
   const handleTeamSelection = (teamId) => {
-    if (selectionIsLocked || usedTeamIds.has(String(teamId))) return;
+    if (entryIsEliminated || selectionIsLocked || usedTeamIds.has(String(teamId))) return;
     setSelectedTeamId(String(teamId));
   };
 
@@ -187,6 +194,7 @@ function Selection() {
     if (
       !currentRound ||
       !selectedFixture ||
+      entryIsEliminated ||
       selectionIsLocked ||
       !selectedTeamId ||
       (currentSelection && String(currentSelection.team_id) === selectedTeamId)
@@ -203,12 +211,13 @@ function Selection() {
 
     const { error: insertError } = await supabase.from("selections").upsert({
       user_id: user.id,
+      entry_id: currentEntry.id,
       round_id: currentRound.id,
       fixture_id: selectedFixture.id,
       team_id: Number(selectedTeamId),
       is_automatic: false,
       selection_source: "MANUAL",
-    }, { onConflict: "user_id,round_id" });
+    }, { onConflict: "entry_id,round_id" });
 
     if (insertError) {
       setError(insertError.message);
@@ -227,11 +236,21 @@ function Selection() {
   return (
     <div className="selection-page">
       <div className="selection-hero">
-        <h1>Make Your Selection</h1>
-        <p>Choose one team to win this weekend.</p>
+        <div>
+          <h1>Make Your Selection</h1>
+          <p>{currentEntry?.name} · {entryIsEliminated ? "Eliminated" : "Active"}</p>
+        </div>
+        {entryIsEliminated && <span className="entry-status-marker">Eliminated</span>}
       </div>
 
       {error && <div className="data-error" role="alert">{error}</div>}
+
+      {entryIsEliminated && (
+        <div className="locked-banner entry-eliminated-banner" role="status">
+          <h2>Eliminated</h2>
+          <p>Your selected team did not win. This entry is no longer active; fixtures and selection history remain available to view.</p>
+        </div>
+      )}
 
       {!currentRound ? (
         <div className="instruction-banner">
@@ -287,7 +306,7 @@ function Selection() {
                       {[fixture.home, fixture.away].map((team) => {
                         const used = usedTeamIds.has(String(team.id));
                         const selected = selectedTeamId === String(team.id);
-                        const unavailable = used || selectionIsLocked;
+                        const unavailable = used || selectionIsLocked || entryIsEliminated;
 
                         return (
                           <button
@@ -327,7 +346,7 @@ function Selection() {
                   <button
                     className="lock-selection-button"
                     type="button"
-                    disabled={saving}
+                    disabled={saving || entryIsEliminated}
                     onClick={() => setShowConfirmation(true)}
                   >
                     Update Selection
@@ -355,7 +374,7 @@ function Selection() {
                   <button
                     className="lock-selection-button"
                     type="button"
-                    disabled={saving || Boolean(currentSelection && String(currentSelection.team_id) === selectedTeamId)}
+                    disabled={saving || entryIsEliminated || Boolean(currentSelection && String(currentSelection.team_id) === selectedTeamId)}
                     onClick={() => setShowConfirmation(true)}
                   >
                     {currentSelection ? "Update Selection" : "Save Selection"}
@@ -406,7 +425,7 @@ function Selection() {
               <button
                 className="confirm-button"
                 type="button"
-                disabled={saving}
+                disabled={saving || entryIsEliminated}
                 onClick={confirmSelection}
               >
                 {saving ? "Saving…" : currentSelection ? "Update Selection" : "Save Selection"}

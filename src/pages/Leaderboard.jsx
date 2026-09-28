@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
-import { useAuth } from "../context/useAuth";
+import { useCompetitionEntry } from "../context/useCompetitionEntry";
 import { loadOwnSelections, loadSelectionDetails } from "../lib/userCompetitionData";
 import "./Leaderboard.css";
 
 function Leaderboard() {
-  const { user } = useAuth();
+  const { currentEntry, loadingEntries } = useCompetitionEntry();
   const [players, setPlayers] = useState([]);
   const [history, setHistory] = useState([]);
   const [historyAvailable, setHistoryAvailable] = useState(true);
@@ -14,9 +14,10 @@ function Leaderboard() {
 
   useEffect(() => {
     const loadLeaderboard = async () => {
+      if (!currentEntry) return;
       const [playersResult, selections] = await Promise.all([
-        supabase.from("leaderboard_players").select("id, display_name, username, competition_status"),
-        loadOwnSelections(user.id),
+        supabase.from("leaderboard_entries").select("id, entry_name, display_name, username, competition_status"),
+        loadOwnSelections(currentEntry.id),
       ]);
 
       if (playersResult.error) throw playersResult.error;
@@ -35,7 +36,7 @@ function Leaderboard() {
     loadLeaderboard()
       .catch((loadError) => setError(loadError.message))
       .finally(() => setLoading(false));
-  }, [user.id]);
+  }, [currentEntry, loadingEntries]);
 
   const activePlayers = players.filter((player) => player.competition_status === "active");
   const eliminatedPlayers = players.filter((player) => player.competition_status === "eliminated");
@@ -47,8 +48,15 @@ function Leaderboard() {
     <div className="leaderboard-page">
       <div className="leaderboard-header">
         <h1>Leaderboard</h1>
-        <p>Aspendale Stingrays Last Man Standing</p>
+        <p>{currentEntry?.name} · {currentEntry?.competition_status === "eliminated" ? "Eliminated" : "Active"}</p>
       </div>
+
+      {currentEntry?.competition_status === "eliminated" && (
+        <div className="entry-eliminated-banner" role="status">
+          <strong>Eliminated</strong>
+          <span>This entry is no longer active. You can continue viewing standings and pick history.</span>
+        </div>
+      )}
 
       {error && <div className="data-error" role="alert">{error}</div>}
 
@@ -93,7 +101,7 @@ function LeaderboardSection({ title, players, playerName, statusLabel, statusCla
           {players.map((player, index) => (
             <div className="leaderboard-row" key={player.id}>
               <span>{index + 1}</span>
-              <strong>{playerName(player)}</strong>
+              <strong>{player.entry_name} · {playerName(player)}</strong>
               <span className={statusClass}>{statusLabel}</span>
             </div>
           ))}

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { useAuth } from "../context/useAuth";
+import { useCompetitionEntry } from "../context/useCompetitionEntry";
 import {
   loadOwnSelections,
   loadRemainingTeams,
@@ -8,26 +8,30 @@ import {
 import "./Journey.css";
 
 function Journey() {
-  const { user } = useAuth();
+  const { currentEntry, loadingEntries } = useCompetitionEntry();
   const [history, setHistory] = useState([]);
   const [remainingTeams, setRemainingTeams] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   const loadJourney = useCallback(async () => {
+    if (!currentEntry) {
+      setLoading(loadingEntries);
+      return;
+    }
     setLoading(true);
     setError("");
 
-    const selections = await loadOwnSelections(user.id);
+    const selections = await loadOwnSelections(currentEntry.id);
     const [details, remaining] = await Promise.all([
       loadSelectionDetails(selections),
-      loadRemainingTeams(user.id),
+      loadRemainingTeams(currentEntry.id),
     ]);
 
     setHistory(details);
     setRemainingTeams(remaining.teams);
     setLoading(false);
-  }, [user.id]);
+  }, [currentEntry, loadingEntries]);
 
   useEffect(() => {
     const timerId = window.setTimeout(() => {
@@ -50,8 +54,15 @@ function Journey() {
     <div className="journey-page">
       <div className="journey-header">
         <h1>My Journey</h1>
-        <p>Track your progress through the competition.</p>
+        <p>{currentEntry?.name} · {currentEntry?.competition_status === "eliminated" ? "Eliminated" : "Active"}</p>
       </div>
+
+      {currentEntry?.competition_status === "eliminated" && (
+        <div className="entry-eliminated-banner" role="status">
+          <strong>Eliminated</strong>
+          <span>Your selected team did not win. This entry is read-only; its selection history remains available below.</span>
+        </div>
+      )}
 
       {error && <div className="data-error" role="alert">Your journey is unavailable: {error}</div>}
 
@@ -71,6 +82,17 @@ function Journey() {
                       Round {selection.round.round_number}
                     </div>
                     <div>Selected: {selection.team.name}</div>
+                    {selection.fixture && (
+                      <div>
+                        Match: {selection.fixture.home_team.name} vs {selection.fixture.away_team.name}
+                        {selection.fixture.home_score !== null && selection.fixture.away_score !== null
+                          ? ` · ${selection.fixture.home_score}-${selection.fixture.away_score}`
+                          : ""}
+                        {selection.fixture.result && selection.fixture.result !== "pending"
+                          ? ` · ${selection.fixture.result.replaceAll("_", " ")}`
+                          : ""}
+                      </div>
+                    )}
                     <div className="result">
                       {selection.is_automatic || selection.selection_source === "AUTO"
                         ? "Automatically selected"
