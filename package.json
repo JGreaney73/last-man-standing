@@ -8,7 +8,8 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "seed:fixtures": "node scripts/seed-fixtures.js"
+    "seed:fixtures": "node scripts/seed-fixtures.js",
+    "import:participants": "node scripts/import-participants.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.1",

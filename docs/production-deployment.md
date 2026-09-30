@@ -24,6 +24,7 @@ Vercel or committed to GitHub.
    - `supabase/migrations/20260926_phase4_selection_lockout.sql`
    - `supabase/migrations/20260927_phase5_round_results.sql`
    - `supabase/migrations/20260928_phase6_competition_entries.sql`
+   - `supabase/migrations/20260929_phase7_admin_entry_provisioning.sql`
 5. In Supabase Authentication, create the team accounts. The profile trigger
    creates a corresponding `public.profiles` row.
 6. Promote at least two administrators:
@@ -49,8 +50,9 @@ Vercel or committed to GitHub.
 9. Round draws eliminate by default. Set `rounds.draw_rule` to `survive` for a
    specific round before processing if that round uses a different draw rule.
 10. Phase 6 creates one competition entry per existing profile and moves its
-   current status and selection history onto that entry. Additional entries
-   can be created until the first-round lockout or until any round is processed.
+   current status and selection history onto that entry. Phase 7 removes
+   player self-enrollment; import participants and all their entries before
+   play using the participant CSV workflow in the README.
 
 ## Vercel deployment
 
@@ -74,8 +76,8 @@ Vercel or committed to GitHub.
 - Open the Vercel URL in a private browser window.
 - Confirm unauthenticated users see the login screen.
 - Sign in as a standard user.
-- Verify the existing account has one migrated entry and its selection history
-   is unchanged; create a second entry before competition processing begins.
+- Verify the existing account has its imported entries and its selection
+   history is unchanged; confirm a standard user cannot create another entry.
 - Make distinct selections for each entry and verify their histories and used
    team lists remain independent.
 - Eliminate one entry and confirm the user remains signed in, can browse its

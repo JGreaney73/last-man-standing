@@ -6,7 +6,6 @@ export function CompetitionEntryProvider({ userId, children }) {
   const [entries, setEntries] = useState([]);
   const [currentEntryId, setCurrentEntryId] = useState("");
   const [loadingEntries, setLoadingEntries] = useState(true);
-  const [creatingEntry, setCreatingEntry] = useState(false);
   const [entryError, setEntryError] = useState("");
 
   const loadEntries = useCallback(async ({ silent = false } = {}) => {
@@ -64,24 +63,6 @@ export function CompetitionEntryProvider({ userId, children }) {
     window.localStorage.setItem(`lms-current-entry-${userId}`, String(entry.id));
   };
 
-  const createEntry = async () => {
-    setCreatingEntry(true);
-    setEntryError("");
-    try {
-      const { data, error } = await supabase.rpc("create_competition_entry");
-      if (error) throw error;
-      await loadEntries();
-      if (data?.id) {
-        setCurrentEntryId(String(data.id));
-        window.localStorage.setItem(`lms-current-entry-${userId}`, String(data.id));
-      }
-    } catch (error) {
-      setEntryError(error.message);
-    } finally {
-      setCreatingEntry(false);
-    }
-  };
-
   const currentEntry = entries.find((entry) => String(entry.id) === currentEntryId) ?? null;
 
   return (
@@ -90,10 +71,8 @@ export function CompetitionEntryProvider({ userId, children }) {
       currentEntry,
       currentEntryId,
       loadingEntries,
-      creatingEntry,
       entryError,
       selectEntry,
-      createEntry,
       refreshEntries: loadEntries,
     }}>
       {children}
