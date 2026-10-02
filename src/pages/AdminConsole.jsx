@@ -1,4 +1,5 @@
 import RoundResults from "./RoundResults";
+import CompetitionStartingRound from "./CompetitionStartingRound";
 import "./RoundResults.css";
 
 function AdminConsole() {
@@ -8,6 +9,7 @@ function AdminConsole() {
         <h1>Competition Administration</h1>
         <p>Last Man Standing Control Centre</p>
       </header>
+      <CompetitionStartingRound />
       <RoundResults />
     </div>
   );

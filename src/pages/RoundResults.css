@@ -73,6 +73,17 @@
   border-radius: 7px;
 }
 
+.starting-round-form {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.starting-round-form .round-picker {
+  flex: 1 1 280px;
+}
+
 .data-error,
 .processing-message {
   padding: 12px 14px;

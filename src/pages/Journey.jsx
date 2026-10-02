@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useCompetitionEntry } from "../context/useCompetitionEntry";
+import { competitionWeekLabel } from "../lib/competitionWeeks";
+import { loadCompetitionStartingRound } from "../lib/competitionSettings";
 import {
   loadOwnSelections,
   loadRemainingTeams,
@@ -11,6 +13,7 @@ function Journey() {
   const { currentEntry, loadingEntries } = useCompetitionEntry();
   const [history, setHistory] = useState([]);
   const [remainingTeams, setRemainingTeams] = useState([]);
+  const [startingRound, setStartingRound] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -22,7 +25,10 @@ function Journey() {
     setLoading(true);
     setError("");
 
-    const selections = await loadOwnSelections(currentEntry.id);
+    const [selections, configuredStartingRound] = await Promise.all([
+      loadOwnSelections(currentEntry.id),
+      loadCompetitionStartingRound(),
+    ]);
     const [details, remaining] = await Promise.all([
       loadSelectionDetails(selections),
       loadRemainingTeams(currentEntry.id),
@@ -30,6 +36,7 @@ function Journey() {
 
     setHistory(details);
     setRemainingTeams(remaining.teams);
+    setStartingRound(configuredStartingRound);
     setLoading(false);
   }, [currentEntry, loadingEntries]);
 
@@ -79,7 +86,8 @@ function Journey() {
                   <div className="timeline-dot" />
                   <div className="week-info">
                     <div className="week-title">
-                      Round {selection.round.round_number}
+                      {competitionWeekLabel(selection.round.round_number, startingRound)}
+                      {` · EPL Round ${selection.round.round_number}`}
                     </div>
                     <div>Selected: {selection.team.name}</div>
                     {selection.fixture && (

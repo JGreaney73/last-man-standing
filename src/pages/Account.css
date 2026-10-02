@@ -1,0 +1,117 @@
+.account-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.account-header {
+  padding: 24px 28px;
+  margin-bottom: 20px;
+  color: white;
+  background: linear-gradient(135deg, var(--stingrays-navy), var(--stingrays-orange));
+  border-radius: 12px;
+}
+
+.account-header h1,
+.account-section h1 {
+  margin: 0;
+}
+
+.account-section {
+  padding: 24px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 35, 70, 0.08);
+}
+
+.account-section h2 {
+  margin-top: 0;
+}
+
+.password-form {
+  display: grid;
+  max-width: 480px;
+  gap: 14px;
+}
+
+.password-form label {
+  display: grid;
+  gap: 6px;
+  color: #18344c;
+  font-weight: 600;
+}
+
+.password-form input {
+  min-height: 44px;
+  padding: 8px 11px;
+  border: 1px solid #bdcad5;
+  border-radius: 7px;
+}
+
+.password-form button {
+  min-height: 44px;
+  padding: 9px 14px;
+  color: white;
+  font-weight: bold;
+  background: var(--stingrays-orange);
+  border: 0;
+  border-radius: 7px;
+  cursor: pointer;
+}
+
+.password-form button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.password-hint {
+  margin: 0;
+  color: #607284;
+  font-size: 13px;
+}
+
+.account-error,
+.account-success {
+  margin: 0;
+  font-size: 14px;
+}
+
+.account-error {
+  color: #a51f1f;
+}
+
+.account-success {
+  color: #146c3f;
+}
+
+.account-link {
+  display: inline-block;
+  margin-top: 18px;
+  color: var(--stingrays-navy);
+  font-weight: bold;
+}
+
+.reset-password-page {
+  padding-top: 10vh;
+}
+
+.reset-password-page .account-section {
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.reset-password-page .account-section > p:not(.login-eyebrow) {
+  color: #607284;
+  line-height: 1.5;
+}
+
+@media (max-width: 520px) {
+  .account-page {
+    padding: 12px;
+  }
+
+  .account-header,
+  .account-section {
+    padding: 20px;
+  }
+}

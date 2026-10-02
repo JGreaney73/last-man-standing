@@ -5,3 +5,7 @@ export const competition = {
   entryFee: 20,
   season: "2026/27",
 };
+
+export function calculatePrizePool(playerCount) {
+  return competition.entryFee * playerCount * 0.6;
+}

@@ -4,6 +4,8 @@ import Selection from "./pages/Selection";
 import Journey from "./pages/Journey";
 import Admin from "./pages/AdminConsole";
 import Leaderboard from "./pages/Leaderboard";
+import Settings from "./pages/Settings";
+import ResetPassword from "./pages/ResetPassword";
 import stingraysLogo from "./assets/stingrays-logo.png";
 import Login from "./components/Login";
 import EntrySwitcher from "./components/EntrySwitcher";
@@ -17,6 +19,8 @@ const pageTitles = {
   journey: "My Journey",
   leaderboard: "Leaderboard",
   admin: "Admin",
+  settings: "Settings",
+  "reset-password": "Reset Password",
 };
 
 const pagePaths = {
@@ -25,6 +29,8 @@ const pagePaths = {
   journey: "/journey",
   leaderboard: "/leaderboard",
   admin: "/admin",
+  settings: "/settings",
+  "reset-password": "/reset-password",
 };
 
 function pageFromPath(pathname) {
@@ -68,6 +74,10 @@ function App() {
     return <main className="setup-state">Loading your session…</main>;
   }
 
+  if (page === "reset-password") {
+    return <ResetPassword />;
+  }
+
   if (!user) {
     return <Login onSignedIn={handleSignedIn} />;
   }
@@ -82,6 +92,9 @@ function App() {
 
       case "journey":
         return <Journey />;
+
+      case "settings":
+        return <Settings />;
 
       case "admin":
         return isAdmin ? (
@@ -127,6 +140,9 @@ function App() {
           </button>
           <button type="button" aria-current={page === "admin" ? "page" : undefined} onClick={() => navigate("admin")}>
             Admin
+          </button>
+          <button type="button" aria-current={page === "settings" ? "page" : undefined} onClick={() => navigate("settings")}>
+            Settings
           </button>
           <button type="button" onClick={signOut}>Sign out</button>
         </div>

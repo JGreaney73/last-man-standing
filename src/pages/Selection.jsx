@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "../context/useAuth";
 import { useCompetitionEntry } from "../context/useCompetitionEntry";
 import { supabase } from "../lib/supabase";
+import { competitionWeekLabel } from "../lib/competitionWeeks";
+import { loadCompetitionStartingRound } from "../lib/competitionSettings";
 import {
   loadOwnSelections,
   loadSelectionDetails,
@@ -22,6 +24,7 @@ function Selection() {
   const { user } = useAuth();
   const { currentEntry, loadingEntries } = useCompetitionEntry();
   const [currentRound, setCurrentRound] = useState(null);
+  const [startingRound, setStartingRound] = useState(1);
   const [fixtures, setFixtures] = useState([]);
   const [history, setHistory] = useState([]);
   const [selectedTeamId, setSelectedTeamId] = useState("");
@@ -39,9 +42,12 @@ function Selection() {
     if (showLoading) setLoading(true);
     setError("");
 
+    const startingRound = await loadCompetitionStartingRound();
+    setStartingRound(startingRound);
     const { data: rounds, error: roundsError } = await supabase
       .from("rounds")
       .select("id, round_number, name, status, first_kickoff")
+      .gte("round_number", startingRound)
       .in("status", ["open", "scheduled"])
       .order("round_number");
 
@@ -160,6 +166,9 @@ function Selection() {
   );
   const selectionIsLocked = isLocked || Boolean(currentSelection?.is_automatic);
   const entryIsEliminated = currentEntry?.competition_status === "eliminated";
+  const currentWeekLabel = currentRound
+    ? `${competitionWeekLabel(currentRound.round_number, startingRound)} · EPL Round ${currentRound.round_number}`
+    : "";
 
   const usedTeamIds = new Set(
     history
@@ -276,7 +285,7 @@ function Selection() {
         <div className="instruction-banner">
           {currentSelection
             ? `You can change your selection until ${new Date(currentRound.lockout_at).toLocaleString()}.`
-            : `Select a team for Round ${currentRound.round_number}. Changes are allowed until two hours before kickoff.`}
+            : `Select a team for ${currentWeekLabel}. Changes are allowed until two hours before kickoff.`}
         </div>
       )}
 
@@ -285,7 +294,7 @@ function Selection() {
           <div className="fixtures-panel">
             <div className="panel-heading">
               <div>
-                <p className="section-label">Round {currentRound.round_number}</p>
+                <p className="section-label">{currentWeekLabel}</p>
                 <h2>Fixtures</h2>
               </div>
               <span className="fixture-count">{fixtures.length} fixtures</span>
@@ -359,8 +368,8 @@ function Selection() {
                     {currentSelection.is_automatic
                       ? "Automatically allocated"
                       : isLocked
-                        ? `Locked for Round ${currentRound.round_number}`
-                        : `Saved for Round ${currentRound.round_number}`}
+                        ? `Locked for ${currentWeekLabel}`
+                        : `Saved for ${currentWeekLabel}`}
                   </p>
                 </>
               ) : selectedTeamId ? (
@@ -370,7 +379,7 @@ function Selection() {
                       .flatMap((fixture) => [fixture.home, fixture.away])
                       .find((team) => String(team.id) === selectedTeamId)?.name}
                   </h3>
-                  <p>Ready to save for Round {currentRound.round_number}</p>
+                  <p>Ready to save for {currentWeekLabel}</p>
                   <button
                     className="lock-selection-button"
                     type="button"
@@ -393,7 +402,10 @@ function Selection() {
                 history.map((selection) => (
                   <div key={selection.id} className="used-team-row">
                     <span>{selection.team.name}</span>
-                    <small>Round {selection.round.round_number}</small>
+                    <small>
+                      {competitionWeekLabel(selection.round.round_number, startingRound)}
+                      {` · EPL Round ${selection.round.round_number}`}
+                    </small>
                   </div>
                 ))
               )}

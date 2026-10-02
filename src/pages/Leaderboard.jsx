@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { useCompetitionEntry } from "../context/useCompetitionEntry";
+import { competitionWeekLabel } from "../lib/competitionWeeks";
+import { loadCompetitionStartingRound } from "../lib/competitionSettings";
 import { loadOwnSelections, loadSelectionDetails } from "../lib/userCompetitionData";
 import "./Leaderboard.css";
 
@@ -8,6 +10,7 @@ function Leaderboard() {
   const { currentEntry, loadingEntries } = useCompetitionEntry();
   const [players, setPlayers] = useState([]);
   const [history, setHistory] = useState([]);
+  const [startingRound, setStartingRound] = useState(1);
   const [historyAvailable, setHistoryAvailable] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -15,13 +18,15 @@ function Leaderboard() {
   useEffect(() => {
     const loadLeaderboard = async () => {
       if (!currentEntry) return;
-      const [playersResult, selections] = await Promise.all([
+      const [playersResult, selections, configuredStartingRound] = await Promise.all([
         supabase.from("leaderboard_entries").select("id, entry_name, display_name, username, competition_status"),
         loadOwnSelections(currentEntry.id),
+        loadCompetitionStartingRound(),
       ]);
 
       if (playersResult.error) throw playersResult.error;
       setPlayers(playersResult.data ?? []);
+      setStartingRound(configuredStartingRound);
 
       try {
         setHistory(await loadSelectionDetails(selections));
@@ -78,7 +83,10 @@ function Leaderboard() {
           <div className="history-list">
             {history.map((selection) => (
               <div className="history-row" key={selection.id}>
-                <strong>Round {selection.round.round_number}</strong>
+                <strong>
+                  {competitionWeekLabel(selection.round.round_number, startingRound)}
+                  {` · EPL Round ${selection.round.round_number}`}
+                </strong>
                 <span>{selection.team.name}</span>
                 <small>{selection.is_automatic ? "Automatically selected" : "Selected by you"}</small>
               </div>

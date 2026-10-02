@@ -7,7 +7,8 @@ Storage. Production hosting is configured for Vercel.
 ## Local setup
 
 1. Create a Supabase project.
-2. Run [`supabase/schema.sql`](supabase/schema.sql) in the Supabase SQL Editor.
+2. Run [`supabase/schema.sql`](supabase/schema.sql), then apply the migrations
+   listed in the production deployment guide in order.
 3. Copy `.env.example` to `.env.local` and add the Supabase URL and anon key.
 4. Create users in Supabase Authentication.
 5. Promote at least two approved users to administrators:
@@ -66,6 +67,30 @@ npm run seed:fixtures -- "/path/to/epl-2026-GMTStandardTime.csv"
 
 The CSV times are interpreted as GMT/UTC. The service-role key is used only by
 this local import command and must never be added to Vercel or `.env.local`.
+
+## Competition weeks
+
+The Admin area controls the Competition Starting Round. The selected Premier
+League round is Competition Week 1; subsequent displayed weeks are calculated
+from the actual round number. Fixture and selection records continue to use
+their original Premier League round IDs. Apply the Phase 8 migration before
+using this setting; it defaults to the earliest configured round.
+
+## Passwords and recovery
+
+Players can change their password in **Settings** after confirming their
+current password. New passwords must contain at least 8 characters and also
+meet any stricter password policy configured in Supabase Auth.
+
+On the sign-in screen, **Forgot Password?** sends Supabase's password recovery
+email. The link returns to `/reset-password`, where the user sets a new
+password without creating another account. Configure the production Site URL
+and allow-list the full recovery URL (for example,
+`https://your-domain.example/reset-password`) in Supabase Authentication URL
+Configuration. For local development, allow
+`http://localhost:5173/reset-password`. Configure a production SMTP provider
+in Supabase Auth so recovery mail is delivered reliably. An expired link can
+be requested again from the sign-in screen.
 
 ## Commands
 

@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { useCompetitionEntry } from "../context/useCompetitionEntry";
-import { competition } from "../data/competition";
+import { competitionWeek } from "../lib/competitionWeeks";
+import { loadCompetitionStartingRound } from "../lib/competitionSettings";
 import { loadRemainingTeams } from "../lib/userCompetitionData";
 import "./Dashboard.css";
 
@@ -17,23 +18,29 @@ function Dashboard() {
   useEffect(() => {
     const loadDashboard = async () => {
       if (!currentEntry) return;
-      const [remainingResult, playersResult] = await Promise.all([
+      const [remainingResult, playersResult, startingRound] = await Promise.all([
         loadRemainingTeams(currentEntry.id),
         supabase.from("leaderboard_entries").select("id, entry_name, display_name, competition_status"),
+        loadCompetitionStartingRound(),
       ]);
 
       if (playersResult.error) throw playersResult.error;
       const { data: rounds, error: roundsError } = await supabase
         .from("rounds")
         .select("round_number, status")
-        .in("status", ["open", "scheduled"])
+        .gte("round_number", startingRound)
         .order("round_number");
 
       if (roundsError) throw roundsError;
       setTeams(remainingResult.teams);
       setSelectionCount(remainingResult.selections.length);
       setPlayers(playersResult.data ?? []);
-      setCurrentWeek(rounds?.[0]?.round_number ?? competition.currentWeek);
+      const currentRound = rounds?.find((round) => round.status === "open")
+        ?? rounds?.find((round) => round.status === "scheduled")
+        ?? rounds?.at(-1);
+      setCurrentWeek(currentRound
+        ? competitionWeek(currentRound.round_number, startingRound)
+        : null);
     };
 
     loadDashboard()
@@ -43,7 +50,6 @@ function Dashboard() {
 
   const activePlayers = players.filter((player) => player.competition_status === "active");
   const eliminatedPlayers = players.filter((player) => player.competition_status === "eliminated");
-  const prizePool = competition.entryFee * players.length * 0.6;
 
   return (
     <div className="dashboard">
@@ -65,7 +71,6 @@ function Dashboard() {
       {error && <div className="data-error" role="alert">Your dashboard data is unavailable: {error}</div>}
 
       <div className="dashboard-grid">
-        <div className="stat-card"><h3>Prize Pool</h3><div className="stat-value">${prizePool.toLocaleString()}</div></div>
         <div className="stat-card"><h3>Current Week</h3><div className="stat-value">{currentWeek ?? "—"}</div></div>
         <div className="stat-card"><h3>Players Active</h3><div className="stat-value">{activePlayers.length}</div></div>
         <div className="stat-card"><h3>Eliminated</h3><div className="stat-value">{eliminatedPlayers.length}</div></div>
@@ -91,7 +96,6 @@ function Dashboard() {
           <ul>
             <li>{activePlayers.length} active player{activePlayers.length === 1 ? "" : "s"}</li>
             <li>{eliminatedPlayers.length} eliminated player{eliminatedPlayers.length === 1 ? "" : "s"}</li>
-            <li>Prize pool allocation: 60% of entry fees</li>
           </ul>
         </div>
       </div>

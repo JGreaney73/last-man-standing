@@ -66,6 +66,36 @@ export function AuthProvider({ children }) {
     return result;
   };
 
+  const sendPasswordReset = async (email) => {
+    if (!supabase) return { error: new Error("Supabase is not configured.") };
+
+    // Recovery links return to this route with a temporary Supabase session.
+    return supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+  };
+
+  const changePassword = async (currentPassword, newPassword) => {
+    if (!supabase || !session?.user?.email) {
+      return { error: new Error("Your account session is unavailable. Sign in again.") };
+    }
+
+    const { error: verificationError } = await supabase.auth.signInWithPassword({
+      email: session.user.email,
+      password: currentPassword,
+    });
+    if (verificationError) {
+      return { error: new Error("The current password is incorrect.") };
+    }
+
+    return supabase.auth.updateUser({ password: newPassword });
+  };
+
+  const updatePassword = async (newPassword) => {
+    if (!supabase) return { error: new Error("Supabase is not configured.") };
+    return supabase.auth.updateUser({ password: newPassword });
+  };
+
   const signOut = async () => {
     if (!supabase) return;
     const { error: signOutError } = await supabase.auth.signOut();
@@ -83,6 +113,9 @@ export function AuthProvider({ children }) {
         error,
         configured: isSupabaseConfigured,
         signIn,
+        sendPasswordReset,
+        changePassword,
+        updatePassword,
         signOut,
       }}
     >

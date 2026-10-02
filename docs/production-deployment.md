@@ -17,7 +17,7 @@ Vercel or committed to GitHub.
 1. Push the repository to GitHub.
 2. Create or select the production Supabase project.
 3. For a new Supabase project, run `supabase/schema.sql` in the SQL Editor,
-   followed by the Phase 4, Phase 5 and Phase 6 migrations below.
+   followed by all migrations below in order.
 4. For an existing project, run these migrations in order:
    - `supabase/migrations/20260925_phase2_fixture_location.sql`
    - `supabase/migrations/20260925_phase3_dashboard_leaderboard.sql`
@@ -25,6 +25,7 @@ Vercel or committed to GitHub.
    - `supabase/migrations/20260927_phase5_round_results.sql`
    - `supabase/migrations/20260928_phase6_competition_entries.sql`
    - `supabase/migrations/20260929_phase7_admin_entry_provisioning.sql`
+   - `supabase/migrations/20261002_phase8_competition_starting_round.sql`
 5. In Supabase Authentication, create the team accounts. The profile trigger
    creates a corresponding `public.profiles` row.
 6. Promote at least two administrators:
@@ -53,6 +54,8 @@ Vercel or committed to GitHub.
    current status and selection history onto that entry. Phase 7 removes
    player self-enrollment; import participants and all their entries before
    play using the participant CSV workflow in the README.
+11. In Admin, choose and save the Competition Starting Round before play. The
+   first selected Premier League round is displayed to players as Week 1.
 
 ## Vercel deployment
 
@@ -69,7 +72,12 @@ Vercel or committed to GitHub.
 
 6. Deploy the production branch.
 7. In Supabase Authentication URL Configuration, set the production Site URL
-   to the Vercel domain and add the Vercel domain to allowed redirect URLs.
+   to the Vercel domain and add
+   `https://your-vercel-domain/reset-password` to allowed redirect URLs. Add
+   `http://localhost:5173/reset-password` for local development.
+8. In Supabase Auth password settings, set a minimum length of at least 8
+   characters and enable the strongest available password protection. Set up
+   a production SMTP provider for password recovery emails.
 
 ## Post-deployment verification
 
@@ -84,6 +92,16 @@ Vercel or committed to GitHub.
    history/results, cannot submit picks for it, and can switch to a still-active
    entry.
 - Confirm Dashboard, Selection, Journey, and Leaderboard load.
+- Set the starting round to 6 and verify round 6 displays as Week 1 and round
+   10 as Week 5 on the dashboard, selection view, and selection histories.
+- Refresh Admin and verify the starting round setting persists. Confirm a
+   standard user cannot update the setting.
+- Confirm the prize pool is not shown anywhere on the player dashboard.
+- In Settings, reject a wrong current password and mismatched new-password
+   confirmation; then change the password and verify the new credentials work.
+- From sign-in, request a password reset, follow the email link, set a new
+   password, and verify sign-in works. Also verify an expired link offers a way
+   to request another.
 - Confirm Admin is unavailable to the standard user.
 - Sign in as each administrator and verify Admin access.
 - Confirm fixture count and round/date/time values.

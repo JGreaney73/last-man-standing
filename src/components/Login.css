@@ -62,3 +62,18 @@
   color: #a51f1f;
   font-size: 14px;
 }
+
+.login-success {
+  color: #146c3f;
+  font-size: 14px;
+}
+
+.login-card .login-text-button {
+  min-height: 0;
+  margin-top: 2px;
+  padding: 6px;
+  color: #1c2857;
+  font-weight: 600;
+  background: transparent;
+  text-decoration: underline;
+}
