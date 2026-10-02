@@ -26,6 +26,7 @@ Vercel or committed to GitHub.
    - `supabase/migrations/20260928_phase6_competition_entries.sql`
    - `supabase/migrations/20260929_phase7_admin_entry_provisioning.sql`
    - `supabase/migrations/20261002_phase8_competition_starting_round.sql`
+   - `supabase/migrations/20261003_phase9_permanent_elimination.sql`
 5. In Supabase Authentication, create the team accounts. The profile trigger
    creates a corresponding `public.profiles` row.
 6. Promote at least two administrators:
@@ -48,8 +49,8 @@ Vercel or committed to GitHub.
    accepted. Leave future rounds as `scheduled`. The lockout migration installs
    a Supabase Cron job that locks overdue rounds and allocates missing picks
    within one minute of the deadline.
-9. Round draws eliminate by default. Set `rounds.draw_rule` to `survive` for a
-   specific round before processing if that round uses a different draw rule.
+9. A selected team must win to survive. Draws and losses always eliminate the
+   entry; the legacy `rounds.draw_rule` value no longer changes this rule.
 10. Phase 6 creates one competition entry per existing profile and moves its
    current status and selection history onto that entry. Phase 7 removes
    player self-enrollment; import participants and all their entries before
@@ -108,8 +109,27 @@ Vercel or committed to GitHub.
 - Confirm fixture schedule details are read-only in Admin.
 - Enter and save scores for every fixture in a test round.
 - Confirm processing is blocked until every fixture has a saved result.
-- Process the round and verify selected-team wins survive while losses and
-   draws eliminate competitors.
+- Process test selections for a win, a draw, and a loss. Verify only the
+   winning selection remains Active and both the draw and loss record the
+   processed round as `eliminated_round_id`.
+- Verify processing a result twice does not reactivate an entry that was
+   already eliminated. A previously eliminated entry keeps its original
+   `eliminated_round_id` in the audit and standings.
+- Attempt selection insert and update requests for an eliminated entry and
+   verify the database trigger rejects both with an elimination error.
+- Confirm the eliminated entry can still view the dashboard and history, but
+   the selection controls are disabled and the elimination message is shown.
+- To manually reinstate one entry, use the Supabase SQL Editor:
+
+   ```sql
+   update public.competition_entries
+   set competition_status = 'active', eliminated_round_id = null,
+         updated_at = clock_timestamp()
+   where id = 123;
+   ```
+
+   Replace `123` with the entry ID. The app treats entries independently; set
+   each entry being reinstated to `active`.
 - Confirm a second processing attempt requires explicit confirmation and that
    both processing runs remain in the audit history.
 - Confirm score changes to an earlier round are blocked after a later round

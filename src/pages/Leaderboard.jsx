@@ -66,12 +66,12 @@ function Leaderboard() {
       {error && <div className="data-error" role="alert">{error}</div>}
 
       <div className="leaderboard-stats">
-        <div className="leaderboard-card"><h3>Active players</h3><div className="leaderboard-number">{activePlayers.length}</div></div>
-        <div className="leaderboard-card"><h3>Eliminated players</h3><div className="leaderboard-number">{eliminatedPlayers.length}</div></div>
+        <div className="leaderboard-card"><h3>Active entries</h3><div className="leaderboard-number">{activePlayers.length}</div></div>
+        <div className="leaderboard-card"><h3>Eliminated entries</h3><div className="leaderboard-number">{eliminatedPlayers.length}</div></div>
       </div>
 
-      <LeaderboardSection title="Active players" players={activePlayers} playerName={playerName} statusLabel="Active" statusClass="alive" />
-      <LeaderboardSection title="Eliminated players" players={eliminatedPlayers} playerName={playerName} statusLabel="Eliminated" statusClass="eliminated" />
+      <LeaderboardSection title="Active entries" players={activePlayers} playerName={playerName} statusLabel="Active" statusClass="alive" />
+      <LeaderboardSection title="Eliminated entries" players={eliminatedPlayers} playerName={playerName} statusLabel="Eliminated" statusClass="eliminated" />
 
       <section className="leaderboard-section">
         <h2>Your selection history</h2>

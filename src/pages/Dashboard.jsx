@@ -72,8 +72,8 @@ function Dashboard() {
 
       <div className="dashboard-grid">
         <div className="stat-card"><h3>Current Week</h3><div className="stat-value">{currentWeek ?? "—"}</div></div>
-        <div className="stat-card"><h3>Players Active</h3><div className="stat-value">{activePlayers.length}</div></div>
-        <div className="stat-card"><h3>Eliminated</h3><div className="stat-value">{eliminatedPlayers.length}</div></div>
+        <div className="stat-card"><h3>Active Entries</h3><div className="stat-value">{activePlayers.length}</div></div>
+        <div className="stat-card"><h3>Eliminated Entries</h3><div className="stat-value">{eliminatedPlayers.length}</div></div>
       </div>
 
       <div className="two-column">
@@ -94,8 +94,8 @@ function Dashboard() {
         <div className="panel">
           <h2>Competition status</h2>
           <ul>
-            <li>{activePlayers.length} active player{activePlayers.length === 1 ? "" : "s"}</li>
-            <li>{eliminatedPlayers.length} eliminated player{eliminatedPlayers.length === 1 ? "" : "s"}</li>
+            <li>{activePlayers.length} active entr{activePlayers.length === 1 ? "y" : "ies"}</li>
+            <li>{eliminatedPlayers.length} eliminated entr{eliminatedPlayers.length === 1 ? "y" : "ies"}</li>
           </ul>
         </div>
       </div>

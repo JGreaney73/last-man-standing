@@ -239,7 +239,7 @@ function RoundResults() {
       ) : (
         <>
           <p className="section-description">
-            Enter the final score for each fixture, save all scores, then process the round. A draw {selectedRound.draw_rule === "survive" ? "keeps the player active" : "eliminates the player"}.
+            Enter the final score for each fixture, save all scores, then process the round. Entries survive only when their selected team wins; draws and losses eliminate the entry.
           </p>
 
           {error && <div className="data-error" role="alert">{error}</div>}

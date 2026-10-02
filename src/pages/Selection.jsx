@@ -257,7 +257,7 @@ function Selection() {
       {entryIsEliminated && (
         <div className="locked-banner entry-eliminated-banner" role="status">
           <h2>Eliminated</h2>
-          <p>Your selected team did not win. This entry is no longer active; fixtures and selection history remain available to view.</p>
+          <p>You have been eliminated from this season&apos;s Last Man Standing competition and can no longer make selections. Your fixtures and selection history remain available to view.</p>
         </div>
       )}
 
